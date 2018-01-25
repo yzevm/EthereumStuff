@@ -393,6 +393,7 @@ contract RubusFundCrowdsale is Ownable, Pausable {
                     mainLogic();
                 }
             }
+            // просто при поступлении 2ух токенов
             if (queueTokens == justTwo) {
                 mainLogic();
             }

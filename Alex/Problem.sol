@@ -380,6 +380,7 @@ contract RubusFundCrowdsale is Ownable, Pausable {
     require(_tokens <= tokenBalance[msg.sender]);
 
     uint256 tokens = _tokens;
+    // переменная токенов для отслеживания в очереди, add(queueTokens) = или 1, или 0
     queueTokens = _tokens.add(queueTokens);
 
     // Добавляем в массив адреса за токены

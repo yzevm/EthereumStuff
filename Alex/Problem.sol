@@ -299,7 +299,7 @@ contract MintableToken is StandardToken, Ownable {
 contract RubusFundToken is StandardToken, Ownable {
 
   string public name = "Rubus Fund Token";
-  uint8 public decimals = 0;
+  uint8 public decimals = 18;
   string public symbol = "RFT";
   
   event Mint(address indexed to, uint256 amount);
@@ -389,9 +389,9 @@ contract RubusFundCrowdsale is Ownable, Pausable {
         if (tokens == 0) {
             while (queueTokens > justTwo) {
                 mainLogic();
-                # if (queueTokens == justTwo) {
-                #     mainLogic();
-                # }
+                if (queueTokens == justTwo) {
+                    mainLogic();
+                }
             }
             if (queueTokens == justTwo) {
                 mainLogic();

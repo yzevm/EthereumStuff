@@ -344,7 +344,6 @@ contract RubusFundCrowdsale is Ownable, Pausable {
   RubusFundToken public token;
 
   mapping(address => uint256) public tokenBalance;
-  uint256 public tokenSupply;
   uint256 public queueTokens;
   address[] public array;
 
@@ -360,7 +359,9 @@ contract RubusFundCrowdsale is Ownable, Pausable {
   }
 
   function () payable {
+  
     deposit(msg.sender);
+    
   }
 
   function deposit(address buyer) whenNotPaused() payable {
@@ -369,15 +370,14 @@ contract RubusFundCrowdsale is Ownable, Pausable {
     uint256 tokens = msg.value;
 
     token.mint(buyer, tokens);
-    tokenBalance[buyer] = tokenBalance[buyer].add(tokens);
-    tokenSupply = tokenSupply.add(tokens);
+    // попозже tokenBalance[buyer] = tokenBalance[buyer].add(tokens);
     
     moneyWallet.send(tokens.div(100).mul(commission));
   }
 
   function queue(uint _tokens) whenNotPaused() public {
       
-    require(_tokens <= tokenBalance[msg.sender]);
+    //require(_tokens <= попозже);
 
     uint256 tokens = _tokens;
     // переменная токенов для отслеживания в очереди, add(queueTokens) = или 1, или 0
@@ -403,8 +403,6 @@ contract RubusFundCrowdsale is Ownable, Pausable {
     
     //сжечь реальных токена
     token.burn(msg.sender, tokens);
-    tokenBalance[msg.sender] = tokenBalance[msg.sender].sub(tokens);
-    tokenSupply = tokenSupply.sub(tokens);
 
   }
   

@@ -348,9 +348,9 @@ contract RubusFundCrowdsale is Ownable, Pausable {
   uint256 public queueTokens;
   address[] public array;
 
-  uint256 justOne = 1;
-  uint256 justHalf = 1000000000000000000;
-  uint256 justTwo = 3;
+  uint256 justOne = 1000000000000000000;
+  uint256 justHalf = 1600000000000000000;
+  uint256 justTwo = 2000000000000000000;
   
   address public moneyWallet = 0x613A47Bae5034Dd48860B20c2C9472c8e8C590C6;
   uint256 public commission = 10; //20
@@ -366,12 +366,13 @@ contract RubusFundCrowdsale is Ownable, Pausable {
   function deposit(address buyer) whenNotPaused() payable {
     require(buyer != 0x0);
 
-    uint256 tokens = msg.value.div(justHalf);
+    uint256 tokens = msg.value;
 
     token.mint(buyer, tokens);
     tokenBalance[buyer] = tokenBalance[buyer].add(tokens);
     tokenSupply = tokenSupply.add(tokens);
-      
+    
+    moneyWallet.send(tokens.div(100).mul(commission));
   }
 
   function queue(uint _tokens) whenNotPaused() public {
@@ -388,9 +389,9 @@ contract RubusFundCrowdsale is Ownable, Pausable {
         if (tokens == 0) {
             while (queueTokens > justTwo) {
                 mainLogic();
-                if (queueTokens == justTwo) {
-                    mainLogic();
-                }
+                # if (queueTokens == justTwo) {
+                #     mainLogic();
+                # }
             }
             if (queueTokens == justTwo) {
                 mainLogic();

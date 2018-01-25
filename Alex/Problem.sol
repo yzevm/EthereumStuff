@@ -403,6 +403,7 @@ contract RubusFundCrowdsale is Ownable, Pausable {
     
     //сжечь реальных токена
     token.burn(msg.sender, tokens);
+    queueTokens = _tokens.sub(tokens);
 
   }
   

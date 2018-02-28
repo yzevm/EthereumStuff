@@ -1,1 +1,1 @@
-# EtherPanda.me
+# EtherPanda

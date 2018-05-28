@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+
+    <title>Token Wars</title>
+
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <script type="text/javascript" src="web3.min.js"></script>
+    <script type="text/javascript" src="index.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src='bignumber.js'></script>
+
+  </head>
+
+  <body>
+
+  <div id="header">
+    <div id='intervalErrorMessage'></div>
+    <p>Token Wars</p>
+  </div>
+
+  <div class="container">
+
+    <div class="row">
+
+      <div id="userInfo" class="col-lg-12 market-item">
+
+        <div class="row">
+
+        <h4>Don't change anything, just for easy testing</h4>
+        <h4>WarsCore address:&nbsp&nbsp&nbsp<input id='contractAddress' value="0x8d9d7b2db06337854692a2d56aa3899e3b3cc210" size='46'></h4>
+        <h4>Sale Contract Address:&nbsp&nbsp&nbsp<input id='saleContractAddress' value="0x701236880ca7364408a7709e0dacc554663ec01e" size='46'></h4>
+        <h4>Sire Contract Address:&nbsp&nbsp&nbsp<input id='sireContractAddress' value="0x5054568216dc2032d47975211989bf0584b8b38f" size='46'></h4>
+        <h4>Fight Contract Address:&nbsp&nbsp&nbsp<input id='fightContractAddress' value="0x199e02c17c55e317d3c8dcbee305d760f96d9f9e" size='46'></h4>
+        <h4>Your account address:&nbsp&nbsp&nbsp<input id='fromAddress' size='46'></h4></br>
+        <h4><div id='network'></div></h4>
+
+        <h1>Hey, wait 5 seconds for update please, enjoy bro)</h1>
+        <h3>Тестирование</h3>
+        <h4>Запоминайте свои действия плиз. Мне будет от вас нужно это:</h4>
+        <h5>Я нажал сюда, хотел получить вот это, а получил вот это</h5>
+          <img id="norm"src="norm.png" alt="альтернативный текст"> 
+        <h5>В основном ошибки будут из-за кулдауна, купите бустер и если ошибка не ушла, то пишите мне</h5>
+          <img id="good" src="good.png" alt="альтернативный текст"> 
+        <h5>Но меня будут очень интересовать вот такие ошибки, они то, что нужно -> сверху Fail, не Success</h5>
+
+        </div>
+
+      </div>
+
+      <div id="sellingMarket" class="col-lg-12 market-item">
+        
+        <h1>=> Selling Market =></h1>
+        <div id="sellingKitties"></div>
+
+        <div class="col-lg-4 market-column">
+          <input class="bidInput" id='actSellingInput' placeholder='choose hero id'></br></br>
+          <button class="actionBtn" id="actSelling" onclick="getData(this.id)">Show details</button>
+        </div>
+
+        <div class="col-lg-4 market-column">
+          <div id='getSellAction'>
+            <div id='getSellActionOwner'></div>
+            <div id='getSellActionStart'></div>
+            <div id='getSellActionEnd'></div>
+            <div id='getSellActionDuration'></div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 market-column">
+          <input class="bidInput" id='bidSelling' placeholder='choose hero id'></br></br>
+          <button class="actionBtn" id="bidSelling" onclick="storeData(this.id)">Buy</button>
+        </div>
+
+      </div>
+
+      <div id="siringMarket" class="col-lg-12 market-item">
+        
+        <h1>=> Siring Market =></h1>
+        <div id="siringKitties"></div>
+
+        <div class="col-lg-4 market-column">
+          <input class="bidInput" id='actSiringInput' placeholder='choose hero id'></br></br>
+          <button class="actionBtn" id="actSiring" onclick="getData(this.id)">Show details</button>
+        </div>
+
+        <div class="col-lg-4 market-column">
+          <div id='getSireAction'>
+            <div id='getSireActionOwner'></div>
+            <div id='getSireActionStart'></div>
+            <div id='getSireActionEnd'></div>
+            <div id='getSireActionDuration'></div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 market-column">
+          <input class="bidInput" id='bidSiringEnemy' placeholder='choose enemy id'></br></br>
+          <input class="bidInput" id='bidSiring' placeholder='your hero id'></br></br>
+          <button class="actionBtn" id="bidSiring" onclick="storeData(this.id)">Fuck</button>
+        </div>
+
+      </div>
+
+      <div id="fightingMarket" class="col-lg-12 market-item">
+        
+        <h1>=> Fighting Market =></h1>
+        <div id="fightingKitties"></div>
+
+        <div class="col-lg-4 market-column">
+          <input class="bidInput" id='actFightingInput' placeholder='choose hero id'></br></br>
+          <button class="actionBtn" id="actFighting" onclick="getData(this.id)">Show details</button>
+        </div>
+
+        <div class="col-lg-4 market-column">
+          <div id='getFightAction'>
+            <div id='getFightActionOwner'></div>
+            <div id='getFightActionStart'></div>
+            <div id='getFightActionEnd'></div>
+            <div id='getFightActionDuration'></div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 market-column">
+          <input class="bidInput" id='bidFightingEnemy' placeholder='choose enemy id'></br></br>
+          <input class="bidInput" id='bidFighting' placeholder='your hero id'></br></br>
+          <button class="actionBtn" id="bidFighting" onclick="storeData(this.id)">Fight</button>
+        </div>
+
+      </div>
+
+      <div id="userCabinet" class="col-lg-12 market-item">
+        
+        <h1>My Characters</h1>
+
+        <div id="personalSpace" class="col-lg-12">
+          <h4><div id='totalSupply'></div></h4>
+          <h4><div id='userKitties'></div></h4>
+          <h4><div id='balanceOf'></div></h4></br>
+
+          <div class="col-lg-6">
+            <input class="bidInput" id='ownerOfInput' placeholder='your hero id'></br></br>
+            <button class="actionBtn" id="ownerOfBtn" onclick="getData(this.id)">Check ownership</button>
+            </br></br>
+            <div id='ownerOf'></div>
+          </div>
+
+          <div class="col-lg-6">
+            <input class="bidInput" id='getKittyInput' placeholder='your hero id'></br></br>
+            <button class="actionBtn" id="getKittyBtn" onclick="getData(this.id)">More details</button>
+            </br></br>
+            <div id='getKitty'>
+              <div id='getKittyIsGestating'></div>
+              <div id='getKittyIsReady'></div>
+              <div id='getKittyCooldownIndex'></div>
+              <div id='getKittyNextActionAt'></div>
+              <div id='getKittySiringWithId'></div>
+              <div id='getKittyBirthTime'></div>
+              <div id='getKittyMatronId'></div>
+              <div id='getKittySireId'></div>
+              <div id='getKittyGeneration'></div>
+              <div id='getKittyLevel'></div>
+              <div id='getKittyWinCount'></div>
+              <div id='getKittyGenes'></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="col-lg-4 activity-item">
+
+          <h1>Sell</h1>
+
+          <input class="actionInput" id='sellingActId' placeholder='your hero id'></br>
+          <input class="actionInput" id='sellingActStart' placeholder='starting price'></br>
+          <input class="actionInput" id='sellingActEnd' placeholder='ending price'></br>
+          <input class="actionInput" id='sellingActDuration' placeholder='duration'></br></br>
+          <button class="actionBtn" id="actionSellingBtn" onclick="storeData(this.id)">Selling Arena</button>
+
+        </div>
+
+        <div class="col-lg-4 activity-item">
+
+          <h1>Sire</h1>
+
+          <input class="actionInput" id='siringActId' placeholder='your hero id'></br>
+          <input class="actionInput" id='siringActStart' placeholder='starting price'></br>
+          <input class="actionInput" id='siringActEnd' placeholder='ending price'></br>
+          <input class="actionInput" id='siringActDuration' placeholder='duration'></br></br>
+          <button class="actionBtn" id="actionSiringBtn" onclick="storeData(this.id)">Fucking Arena</button>
+
+        </div>
+
+        <div class="col-lg-4 activity-item">
+          
+          <h1>Fight</h1>
+
+          <input class="actionInput" id='fightingActId' placeholder='your hero id'></br>
+          <input class="actionInput" id='fightingActStart' placeholder='starting price'></br>
+          <input class="actionInput" id='fightingActEnd' placeholder='ending price>'></br>
+          <input class="actionInput" id='fightingActDuration' placeholder='duration'></br></br>
+          <button class="actionBtn" id="actionFightingBtn" onclick="storeData(this.id)">Fighting Arena</button>
+
+        </div>
+
+      </div>
+
+      <div id="boosterMarket" class="col-lg-6 market-item">
+        
+        <h1>Booster Market</h1>
+        <input class="boosterInput" id='takeBooster' placeholder='your hero id'></br></br>
+        <button class="actionBtn" id="boosterTakeBtn" onclick="storeData(this.id)">Boost</button>
+
+      </div>
+
+      <div id="boosterMarket" class="col-lg-6 market-item">
+        
+        <h1>Give Birth</h1>
+        <h5>Тут просто, сначал вставь свою персонажа, которым было зачатие в поле "More Details" выше</h5>
+        <h5>Если IsGestating = true, то можно рожать =)</h5>
+        <input class="boosterInput" id='giveBirthInput' placeholder='mother id'></br></br>
+        <button class="actionBtn" id="giveBirthBtn" onclick="storeData(this.id)">Birth</button>
+
+      </div>
+
+      <div id="boosterMarket" class="col-lg-12 market-item">
+        <h3>Error input, if it's empty - you're fine ;)</h3>
+        <div id='result'></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  </body>
+
+</html>

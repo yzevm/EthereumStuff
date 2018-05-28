@@ -112,8 +112,8 @@ contract BasicToken is ERC20Basic {
 
   address public enterWallet = 0x73D5f035B8CB58b4aF065d6cE49fC8E7288536F3;
   address public investWallet = 0xD074B636Ccbf1A3482e20b54bF013c1D0c1045b0;
-  address public exitWallet = 0x73D5f035B8CB58b4aF065d6cE49fC8E7288536F3;
-  uint256 public priceEthPerToken = 32258;
+  address public exitWallet = 0xec097d01A6b2C6d415D430B0D4e92f70CACB948D;
+  uint256 public priceEthPerToken = 33333;
   
   uint256 public depositCommission = 95;
   uint256 public investCommission = 70;

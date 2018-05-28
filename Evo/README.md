@@ -1,1 +1,1 @@
-# https://evo.live
+# https://partners.evo.live/en?

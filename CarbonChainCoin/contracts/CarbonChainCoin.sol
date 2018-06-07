@@ -1682,7 +1682,7 @@ contract CarbonChainCoin is StandardToken, usingOraclize {
             emit LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
-            oraclize_query(60, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
+            oraclize_query(86400, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
         }
     }
 
@@ -1691,7 +1691,7 @@ contract CarbonChainCoin is StandardToken, usingOraclize {
             emit LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
-            oraclize_query(60, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
+            oraclize_query(86400, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
         }
     }
 

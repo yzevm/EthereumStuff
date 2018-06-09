@@ -121,16 +121,16 @@ contract BittechToken is StandardToken {
   uint256 constant public decimals = 18;
 
   address constant public bountyWallet = 0x8E8d4cdADbc027b192DfF91c77382521B419E5A2;
-  uint256 public bountyPart = uint256(1000000).mul(10 ** decimals);
+  uint256 public bountyPart = uint256(2500000).mul(10 ** decimals); 
   address constant public adviserWallet = 0x1B9D19Af310E8cB35D0d3B8977b65bD79C5bB299;
-  uint256 public adviserPart = uint256(1500000).mul(10 ** decimals);
+  uint256 public adviserPart = uint256(500000).mul(10 ** decimals);
   address constant public reserveWallet = 0xa323DA182fDfC10861609C2c98894D9745ABAB91;
   uint256 public reservePart = uint256(10000000).mul(10 ** decimals);
   address constant public ICOWallet = 0x1ba99f4F5Aa56684423a122D72990A7851AaFD9e;
-  uint256 public ICOPart = uint256(25000000).mul(10 ** decimals);
-  uint256 public PreICOPart = uint256(5000000).mul(10 ** decimals);
+  uint256 public ICOPart = uint256(30000000).mul(10 ** decimals);
+  uint256 public PreICOPart = uint256(2500000).mul(10 ** decimals);
   address constant public teamWallet = 0x69548B7740EAf1200312d803f8bDd04F77523e09;
-  uint256 public teamPart = uint256(7500000).mul(10 ** decimals);
+  uint256 public teamPart = uint256(4500000).mul(10 ** decimals);
 
   uint256 constant public yearSeconds = 31536000; // 60*60*24*365 = 31536000
   uint256 constant public secsPerBlock = 14; // 1 block per 14 seconds
@@ -171,15 +171,15 @@ contract BittechToken is StandardToken {
   function viewTeamTokens() public view returns (uint256) {
 
     if (block.number >= startTime.add(yearSeconds.div(secsPerBlock))) {
-      return 2500000;
+      return 1500000;
     }
 
     if (block.number >= startTime.add(yearSeconds.div(secsPerBlock).mul(2))) {
-      return 5000000;
+      return 3000000;
     }
 
     if (block.number >= startTime.add(yearSeconds.div(secsPerBlock).mul(3))) {
-      return 7500000;
+      return 4500000;
     }
 
   }
@@ -200,16 +200,13 @@ contract BittechPresale is Pausable {
     BittechToken public tokenReward;
     mapping(address => uint256) public balanceOf;
     mapping(address => uint256) public balanceOfUSD;
-    uint256 constant public USDSoftCap = 100000; // 100 000 $
     uint256 constant public tokenHardCap = 5000000000000000000000000; // 5 mln tokens
     uint256 constant public decimals = 1000000000000000000; // 10 ** 18
     uint256 public tokensRaised = 0;
-    uint256 public USDRaised = 0;
     uint256 public minimalPriceUSD = 2000;
-    uint256 public ETHUSD = 380;
+    uint256 public ETHUSD = 600;
     uint256 public tokenPricePerUSD = 100;
     bool public presaleFinished = false;
-    bool public softCapRaised = false;
     
     modifier whenNotFinished() {
         require(!presaleFinished);
@@ -242,58 +239,31 @@ contract BittechPresale is Pausable {
         require(buyer != address(0));
         require(msg.value.mul(ETHUSD) >= minimalPriceUSD.mul(decimals));
         
-        uint256 tokens = msg.value.mul(ETHUSD).mul(getBonus(buyer)).div(100).mul(tokenPricePerUSD).div(100);
+        uint256 tokens = msg.value.mul(ETHUSD).mul(getBonus(buyer)).mul(tokenPricePerUSD).div(100).div(100);
         tokenReward.transfer(buyer, tokens);
         uint256 receivedDollars = msg.value.mul(ETHUSD).div(decimals);
         balanceOfUSD[buyer] = balanceOfUSD[buyer].add(receivedDollars);
         balanceOf[buyer] = balanceOf[buyer].add(msg.value);
 
         tokensRaised = tokensRaised.add(tokens);
-        USDRaised = USDRaised.add(receivedDollars);
-
-        if (softCapRaised) {
-            owner.transfer(msg.value);
-        }
-        
-        if (USDRaised >= USDSoftCap) { // check
-            softCapRaised = true;
-            owner.transfer(address(this).balance);
-        }
 
         if (tokensRaised >= tokenHardCap) {
             presaleFinished = true;
+            uint256 tokenBalance = tokenReward.balanceOf(address(this));
+            tokenReward.burn(tokenBalance);
         }
+        
+        owner.transfer(msg.value);
 
     }
 
-    function safeWithdrawal() whenFinished public {
-        if (!softCapRaised) {
-            uint amount = balanceOf[msg.sender];
-            msg.sender.transfer(amount);
-            balanceOf[msg.sender] = 0;
-        }
-
-        if (softCapRaised && owner == msg.sender) {
-            owner.transfer(address(this).balance);
-        }
-    }
-
-    function tokenTransfer(address who, uint256 amount) whenNotFinished onlyOwner public {
-        uint256 tokens = amount.mul(decimals);
-        tokenReward.transfer(who, tokens);
-    }
-
-    function transferFunds() whenFinished onlyOwner public {
-        require(softCapRaised);
+    function transferFunds() onlyOwner public {
         owner.transfer(address(this).balance);
     }
 
     function finishPresale() onlyOwner public {
         presaleFinished = true;
-        if (USDRaised >= USDSoftCap) {
-            softCapRaised = true;
-            owner.transfer(address(this).balance);
-        }
+
         uint256 tokenBalance = tokenReward.balanceOf(address(this));
         tokenReward.burn(tokenBalance);
     }

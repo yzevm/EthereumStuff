@@ -121,20 +121,20 @@ contract BittechToken is StandardToken {
   uint256 constant public decimals = 18;
 
   address constant public bountyWallet = 0x8E8d4cdADbc027b192DfF91c77382521B419E5A2;
-  uint256 public bountyPart = uint256(2500000).mul(10 ** decimals); 
+  uint256 public bountyPart = uint256(5000000).mul(10 ** decimals); 
   address constant public adviserWallet = 0x1B9D19Af310E8cB35D0d3B8977b65bD79C5bB299;
-  uint256 public adviserPart = uint256(500000).mul(10 ** decimals);
+  uint256 public adviserPart = uint256(1000000).mul(10 ** decimals);
   address constant public reserveWallet = 0xa323DA182fDfC10861609C2c98894D9745ABAB91;
-  uint256 public reservePart = uint256(10000000).mul(10 ** decimals);
+  uint256 public reservePart = uint256(20000000).mul(10 ** decimals);
   address constant public ICOWallet = 0x1ba99f4F5Aa56684423a122D72990A7851AaFD9e;
-  uint256 public ICOPart = uint256(30000000).mul(10 ** decimals);
-  uint256 public PreICOPart = uint256(2500000).mul(10 ** decimals);
+  uint256 public ICOPart = uint256(60000000).mul(10 ** decimals);
+  uint256 public PreICOPart = uint256(5000000).mul(10 ** decimals);
   address constant public teamWallet = 0x69548B7740EAf1200312d803f8bDd04F77523e09;
-  uint256 public teamPart = uint256(4500000).mul(10 ** decimals);
+  uint256 public teamPart = uint256(9000000).mul(10 ** decimals);
 
   uint256 constant public yearSeconds = 31536000; // 60*60*24*365 = 31536000
   uint256 constant public secsPerBlock = 14; // 1 block per 14 seconds
-  uint256 public INITIAL_SUPPLY = uint256(50000000).mul(10 ** decimals); // 50 000 000 tokens
+  uint256 public INITIAL_SUPPLY = uint256(100000000).mul(10 ** decimals); // 100 000 000 tokens
 
   uint256 public withdrawTokens = 0;
   uint256 public startTime;
@@ -143,22 +143,22 @@ contract BittechToken is StandardToken {
     totalSupply_ = INITIAL_SUPPLY;
 
     balances[bountyWallet] = bountyPart;
-    emit Transfer(this, bountyWallet, bountyPart); // 1
+    emit Transfer(this, bountyWallet, bountyPart);
 
     balances[adviserWallet] = adviserPart;
-    emit Transfer(this, adviserWallet, adviserPart); // 1.5
+    emit Transfer(this, adviserWallet, adviserPart);
 
     balances[reserveWallet] = reservePart;
-    emit Transfer(this, reserveWallet, reservePart); // 10
+    emit Transfer(this, reserveWallet, reservePart);
 
     balances[ICOWallet] = ICOPart;
-    emit Transfer(this, ICOWallet, ICOPart); // 25
+    emit Transfer(this, ICOWallet, ICOPart);
 
     balances[msg.sender] = PreICOPart;
-    emit Transfer(this, msg.sender, PreICOPart); // 5
+    emit Transfer(this, msg.sender, PreICOPart);
 
     balances[this] = teamPart;
-    emit Transfer(this, this, teamPart); // 7.5
+    emit Transfer(this, this, teamPart); 
 
     startTime = block.number;
   }
@@ -171,15 +171,15 @@ contract BittechToken is StandardToken {
   function viewTeamTokens() public view returns (uint256) {
 
     if (block.number >= startTime.add(yearSeconds.div(secsPerBlock))) {
-      return 1500000;
-    }
-
-    if (block.number >= startTime.add(yearSeconds.div(secsPerBlock).mul(2))) {
       return 3000000;
     }
 
+    if (block.number >= startTime.add(yearSeconds.div(secsPerBlock).mul(2))) {
+      return 6000000;
+    }
+
     if (block.number >= startTime.add(yearSeconds.div(secsPerBlock).mul(3))) {
-      return 4500000;
+      return 9000000;
     }
 
   }
@@ -252,9 +252,7 @@ contract BittechPresale is Pausable {
             uint256 tokenBalance = tokenReward.balanceOf(address(this));
             tokenReward.burn(tokenBalance);
         }
-        
         owner.transfer(msg.value);
-
     }
 
     function transferFunds() onlyOwner public {

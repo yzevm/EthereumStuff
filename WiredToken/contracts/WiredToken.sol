@@ -591,7 +591,7 @@ contract WiredToken is MintableToken {
 
         balances[msg.sender] = balances[msg.sender].add(amount.mul(100000000));
         balances[address(this)] = balances[address(this)].sub(amount.mul(100000000));
-        emit Transfer(address(this), msg.sender, balances[address(this)]);
+        emit Transfer(address(this), msg.sender, amount);
         mainSaleInvestors[msg.sender] = mainSaleInvestors[msg.sender].add(amount.mul(100000000));
         mainSaleInvestors[address(this)] = mainSaleInvestors[address(this)].sub(amount.mul(100000000));
     }

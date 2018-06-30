@@ -105,6 +105,7 @@ contract ERC20Basic {
 contract BasicToken is ERC20Basic, Ownable {
   using SafeMath for uint256;
     
+  address[] staff;
   mapping (address => uint256) balances;
   uint256 totalSupply_;
   mapping (address => uint256) public preSaleTokens;
@@ -114,7 +115,9 @@ contract BasicToken is ERC20Basic, Ownable {
   uint256 public launchBlock = 999999999999999999999999999999;
   uint256 constant public monthSeconds = 2592000;
   uint256 constant public secsPerBlock = 15; // 1 block per 15 seconds
+  uint256 public totalFreezeTokens = 0;
   bool public listing = false;
+  bool public freezing = true;
   address public agentAddress;
   
   function totalSupply() public view returns (uint256) {
@@ -122,8 +125,14 @@ contract BasicToken is ERC20Basic, Ownable {
   }
   
   modifier afterListing() {
-    require(listing == true || msg.sender == owner || msg.sender == agentAddress);
+    require(listing == true || checkStaff(msg.sender));
     _;
+  }
+
+  function checkStaff(address spender) public view returns(bool) {
+    for (uint i = 0; i < staff.length; i++) {
+      if (spender == staff[i]) return true;
+    }
   }
   
   function checkVesting(address sender) public view returns (uint256) {
@@ -141,10 +150,14 @@ contract BasicToken is ERC20Basic, Ownable {
   }
   
   function checkVestingWithFrozen(address sender) public view returns (uint256) {
-      if (freezeTimeBlock[sender] <= block.number) {
+      if (freezing) {
+          if (freezeTimeBlock[sender] <= block.number) {
+              return checkVesting(sender);
+          } else {
+              return checkVesting(sender).sub(freezeTokens[sender]);
+          }
+      } esle {
           return checkVesting(sender);
-      } else {
-          return checkVesting(sender).sub(freezeTokens[sender]);
       }
   }
   
@@ -244,6 +257,52 @@ contract StandardToken is ERC20, BurnableToken {
   
 }
 
+contract Founders is Ownable {
+
+  uint256 public launchBlock = 999999999999999999999999999999;
+  uint256 constant public monthSeconds = 2592000;
+  uint256 constant public secsPerBlock = 15; // 1 block per 15 seconds
+  uint256 public withdrawTokens;
+  address public teamWallet = 0x11231231231312313123132131231; // change before deploy
+  AlbosToken public albosAddress;
+  
+  function Founders {
+    albosAddress = AlbosToken(msg.sender);
+  }
+
+  modifier onlyTeam() {
+    require(msg.sender == teamWallet);
+    _;
+  }
+
+  function viewTeamTokens() public view returns (uint256) {
+
+    if (block.number >= launchBlock.add(monthSeconds.mul(3).div(secsPerBlock))) {
+      return uint(28710000000).mul(3).div(10);
+    }
+
+    if (block.number >= launchBlock.add(monthSeconds.mul(6).div(secsPerBlock)) {
+      return uint(28710000000).mul(65).div(100);
+    }
+
+    if (block.number >= launchBlock.add(monthSeconds.mul(9).div(secsPerBlock)) {
+      return uint(28710000000);
+    }
+
+  }
+
+  function startBlock() onlyOwner {
+    launchBlock = block.number;
+  }
+
+  function getTeamTokens(uint256 _tokens) public onlyTeam {
+    uint256 tokens = _tokens.mul(10 ** 18);
+    require(withdrawTokens.add(tokens) <= viewTeamTokens().mul(10 ** 18));
+    albosAddress.transfer(teamWallet, tokens);
+    withdrawTokens = withdrawTokens.add(tokens);
+  }
+}
+
 contract AlbosToken is StandardToken {
 
   string constant public name = "ALBOS Token";
@@ -251,14 +310,23 @@ contract AlbosToken is StandardToken {
   uint256 public decimals = 18;
   
   uint256 public INITIAL_SUPPLY = uint256(28710000000).mul(10 ** decimals); // 28,710,000,000 tokens
+  uint256 public foundersSupply = uint256(8613000000).mul(10 ** decimals); // 8,613,000,000 tokens
+  Founders public foundersAddress;
   
   function AlbosToken() public {
     totalSupply_ = INITIAL_SUPPLY;
 
-    balances[address(this)] = totalSupply_;
-    emit Transfer(address(this), address(this), totalSupply_);
-    
+    foundersAddress = new Founders();
+
+    balances[foundersAddress] = foundersSupply;
+    emit Transfer(address(this), foundersAddress, foundersSupply);
+
+    balances[address(this)] = totalSupply_.sub(foundersSupply);
+    emit Transfer(address(this), address(this), totalSupply_.sub(foundersSupply));
+
     agentAddress = msg.sender;
+    staff.push(owner);
+    staff.push(agentAddress);
   }
   
   modifier onlyAgent() {
@@ -269,6 +337,7 @@ contract AlbosToken is StandardToken {
   function startListing() public onlyOwner {
     require(!listing);
     launchBlock = block.number;
+    foundersAddress.startBlock();
     listing = true;
   }
   
@@ -327,20 +396,34 @@ contract AlbosToken is StandardToken {
   }
   
   function addFrostTokens(address sender, uint256 amount, uint256 blockTime) external onlyAgent {
+
+      totalFreezeTokens = totalFreezeTokens.add(amount);
+      require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
+
       freezeTokens[sender] = amount;
       freezeTimeBlock[sender] = blockTime;
   }
   
   function addFrostTokensMulti(address[] sender, uint256[] amount, uint256[] blockTime) external onlyAgent {
       require(sender.length > 0 && sender.length == amount.length && amount.length == blockTime.length);
-      
+
       for(uint i = 0; i < sender.length; i++) {
+        totalFreezeTokens = totalFreezeTokens.add(amount[i]);
         freezeTokens[sender[i]] = amount[i];
         freezeTimeBlock[sender[i]] = blockTime[i];
       }
+      require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
   }
   
-  function transferAgent(address _agent) external onlyAgent {
+  function transferAgent(address _agent) external onlyOwner {
       agentAddress = _agent;
+  }
+
+  function addStaff(address _staff) external onlyOwner {
+      staff.push(_staff);
+  }
+
+  function killFrost() external onlyOwner {
+    freezing = false;
   }
 }

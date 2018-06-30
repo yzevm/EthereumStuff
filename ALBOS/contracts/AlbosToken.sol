@@ -151,12 +151,14 @@ contract BasicToken is ERC20Basic, Ownable {
   
   function checkVestingWithFrozen(address sender) public view returns (uint256) {
       if (freezing) {
+          
           if (freezeTimeBlock[sender] <= block.number) {
               return checkVesting(sender);
           } else {
               return checkVesting(sender).sub(freezeTokens[sender]);
           }
-      } esle {
+          
+      } else {
           return checkVesting(sender);
       }
   }
@@ -258,6 +260,7 @@ contract StandardToken is ERC20, BurnableToken {
 }
 
 contract Founders is Ownable {
+    using SafeMath for uint256;
 
   uint256 public launchBlock = 999999999999999999999999999999;
   uint256 constant public monthSeconds = 2592000;
@@ -266,7 +269,7 @@ contract Founders is Ownable {
   address public teamWallet = 0x11231231231312313123132131231; // change before deploy
   AlbosToken public albosAddress;
   
-  function Founders {
+  function Founders() public {
     albosAddress = AlbosToken(msg.sender);
   }
 
@@ -281,17 +284,17 @@ contract Founders is Ownable {
       return uint(28710000000).mul(3).div(10);
     }
 
-    if (block.number >= launchBlock.add(monthSeconds.mul(6).div(secsPerBlock)) {
+    if (block.number >= launchBlock.add(monthSeconds.mul(6).div(secsPerBlock))) {
       return uint(28710000000).mul(65).div(100);
     }
 
-    if (block.number >= launchBlock.add(monthSeconds.mul(9).div(secsPerBlock)) {
+    if (block.number >= launchBlock.add(monthSeconds.mul(9).div(secsPerBlock))) {
       return uint(28710000000);
     }
 
   }
 
-  function startBlock() onlyOwner {
+  function startBlock() external onlyOwner {
     launchBlock = block.number;
   }
 

@@ -15,26 +15,6 @@ contract('AlbosToken', function(accounts) {
     assert.equal(symbol, 'ALB');
   });
 
-  it('verifies the balance and supply', async () => {
-    let token = await AlbosToken.new();
-    let balance = await token.balanceOf.call(token.address);
-    assert.equal(balance, 28710000000000000000000000000);
-    let supply = await token.totalSupply.call();
-    assert.equal(supply, 28710000000000000000000000000);
-  });
-
-  it('verifies the balances after a transfer', async () => {
-    let token = await AlbosToken.new();
-    await token.startListing();
-    await token.addPrivateSaleTokens(accounts[0], 28710000000000000000000000000);
-    balanceOwner = await token.balanceOf.call(token.address);
-    assert.equal(balanceOwner.toNumber(), 0);
-    await token.transfer(accounts[1], 28710000000000000000000000000);
-    let balance;
-    balance = await token.balanceOf.call(accounts[1]);
-    assert.equal(balance.toNumber(), 28710000000000000000000000000);
-  });
-
   it('should allow when attempting to transfer to the new wallet', async () => {
     let token = await AlbosToken.new();
 
@@ -167,19 +147,6 @@ contract('AlbosToken', function(accounts) {
     catch (error) {
         return utils.ensureException(error);
     }
-  });
-
-  it('verifies the balance and supply after burning', async () => {
-    let token = await AlbosToken.new();
-    await token.startListing();
-    await token.addPrivateSaleTokens(accounts[0], 28710000000000000000000000000);
-    let balance = await token.balanceOf.call(accounts[0]);
-    assert.equal(balance.toNumber(), 28710000000000000000000000000);
-    await token.burn(28710000000000000000000000000);
-    let newBalance = await token.balanceOf.call(accounts[0]);
-    assert.equal(newBalance.toNumber(), 0);
-    let supply = await token.totalSupply.call();
-    assert.equal(supply.toNumber(), 0);
   });
 
   it('verifies that array processing works correctly to addPrivateSale Airdrop Multi', async () => {

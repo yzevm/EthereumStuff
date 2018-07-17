@@ -5,7 +5,6 @@ pragma solidity ^0.4.20;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
@@ -64,7 +63,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -114,7 +113,7 @@ contract BasicToken is ERC20Basic, Ownable {
   mapping (address => uint256) public freezeTimeBlock;
   uint256 public launchBlock = 999999999999999999999999999999;
   uint256 constant public monthSeconds = 2592000;
-  uint256 constant public secsPerBlock = 15; // 1 block per 15 seconds
+  uint256 constant public secsPerBlock = 14; // 1 block per 14 seconds
   uint256 public totalFreezeTokens = 0;
   bool public listing = false;
   bool public freezing = true;
@@ -125,7 +124,7 @@ contract BasicToken is ERC20Basic, Ownable {
   }
   
   modifier afterListing() {
-    require(listing == true || checkStaff(msg.sender));
+    require(listing == true || owner == msg.sender || agentAddress == msg.sender);
     _;
   }
 
@@ -136,31 +135,31 @@ contract BasicToken is ERC20Basic, Ownable {
   }
   
   function checkVesting(address sender) public view returns (uint256) {
-      if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(4))) {
-          return balances[sender];
-      } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(3))) {
-          return balances[sender].sub((crowdSaleTokens[sender].mul(2).div(10)));
-      } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(2))) {
-          return balances[sender].sub((preSaleTokens[sender].mul(3).div(10)).add(crowdSaleTokens[sender].mul(4).div(10)));
-      } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock))) {
-          return balances[sender].sub((preSaleTokens[sender].mul(6).div(10)).add(crowdSaleTokens[sender].mul(6).div(10)));
-      } else {
-         return balances[sender].sub((preSaleTokens[sender].mul(9).div(10)).add(crowdSaleTokens[sender].mul(8).div(10)));
-      }
+    if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(4))) {
+        return balances[sender];
+    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(3))) {
+        return balances[sender].sub((crowdSaleTokens[sender].mul(2).div(10)));
+    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(2))) {
+        return balances[sender].sub((preSaleTokens[sender].mul(3).div(10)).add(crowdSaleTokens[sender].mul(4).div(10)));
+    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock))) {
+        return balances[sender].sub((preSaleTokens[sender].mul(6).div(10)).add(crowdSaleTokens[sender].mul(6).div(10)));
+    } else {
+        return balances[sender].sub((preSaleTokens[sender].mul(9).div(10)).add(crowdSaleTokens[sender].mul(8).div(10)));
+    }
   }
   
   function checkVestingWithFrozen(address sender) public view returns (uint256) {
-      if (freezing) {
-          
-          if (freezeTimeBlock[sender] <= block.number) {
-              return checkVesting(sender);
-          } else {
-              return checkVesting(sender).sub(freezeTokens[sender]);
-          }
-          
-      } else {
+    if (freezing) {
+        
+      if (freezeTimeBlock[sender] <= block.number) {
           return checkVesting(sender);
+      } else {
+          return checkVesting(sender).sub(freezeTokens[sender]);
       }
+        
+    } else {
+        return checkVesting(sender);
+    }
   }
   
   /**
@@ -171,7 +170,9 @@ contract BasicToken is ERC20Basic, Ownable {
   function transfer(address _to, uint256 _value) afterListing public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-    require(_value <= checkVestingWithFrozen(msg.sender));
+    if (checkStaff(msg.sender) == false) {
+        require(_value <= checkVestingWithFrozen(msg.sender));
+    }
 
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -206,7 +207,9 @@ contract BurnableToken is BasicToken {
    */
   function burn(uint256 _value) afterListing public {
     require(_value <= balances[msg.sender]);
-    require(_value <= checkVestingWithFrozen(msg.sender));
+    if (checkStaff(msg.sender) == false) {
+        require(_value <= checkVestingWithFrozen(msg.sender));
+    }
     // no need to require value <= totalSupply, since that would imply the
     // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
@@ -226,7 +229,9 @@ contract StandardToken is ERC20, BurnableToken {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
-    require(_value <= checkVestingWithFrozen(_from));
+    if (checkStaff(_from) == false) {
+        require(_value <= checkVestingWithFrozen(_from));
+    }
 
     balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
@@ -260,16 +265,16 @@ contract StandardToken is ERC20, BurnableToken {
 }
 
 contract Founders is Ownable {
-    using SafeMath for uint256;
+  using SafeMath for uint256;
 
   uint256 public launchBlock = 999999999999999999999999999999;
   uint256 constant public monthSeconds = 2592000;
-  uint256 constant public secsPerBlock = 15; // 1 block per 15 seconds
+  uint256 constant public secsPerBlock = 14; // 1 block per 14 seconds
   uint256 public withdrawTokens;
   address public teamWallet = 0x11231231231312313123132131231; // change before deploy
   AlbosToken public albosAddress;
   
-  function Founders() public {
+  constructor() public {
     albosAddress = AlbosToken(msg.sender);
   }
 
@@ -280,16 +285,14 @@ contract Founders is Ownable {
 
   function viewTeamTokens() public view returns (uint256) {
 
-    if (block.number >= launchBlock.add(monthSeconds.mul(3).div(secsPerBlock))) {
-      return uint(28710000000).mul(3).div(10);
-    }
-
-    if (block.number >= launchBlock.add(monthSeconds.mul(6).div(secsPerBlock))) {
-      return uint(28710000000).mul(65).div(100);
-    }
-
     if (block.number >= launchBlock.add(monthSeconds.mul(9).div(secsPerBlock))) {
       return uint(28710000000);
+    } else if (block.number >= launchBlock.add(monthSeconds.mul(6).div(secsPerBlock))) {
+      return uint(28710000000).mul(65).div(100);
+    } else if (block.number >= launchBlock.add(monthSeconds.mul(3).div(secsPerBlock))) {
+      return uint(28710000000).mul(3).div(10);
+    } else {
+      return 0;
     }
 
   }
@@ -316,7 +319,7 @@ contract AlbosToken is StandardToken {
   uint256 public foundersSupply = uint256(8613000000).mul(10 ** decimals); // 8,613,000,000 tokens
   Founders public foundersAddress;
   
-  function AlbosToken() public {
+  constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
 
     foundersAddress = new Founders();
@@ -345,88 +348,92 @@ contract AlbosToken is StandardToken {
   }
   
   function addPrivateSaleTokens(address sender, uint256 amount) external onlyAgent {
-      balances[address(this)] = balances[address(this)].sub(amount);
-      balances[sender] = balances[sender].add(amount);
-      emit Transfer(address(this), sender, amount);
+    balances[address(this)] = balances[address(this)].sub(amount);
+    balances[sender] = balances[sender].add(amount);
+    emit Transfer(address(this), sender, amount);
   }
   
   function addPrivateSaleTokensMulti(address[] sender, uint256[] amount) external onlyAgent {
-      require(sender.length > 0 && sender.length == amount.length);
-      
-      for(uint i = 0; i < sender.length; i++) {
-        balances[address(this)] = balances[address(this)].sub(amount[i]);
-        balances[sender[i]] = balances[sender[i]].add(amount[i]);
-        emit Transfer(address(this), sender[i], amount[i]);
-      }
+    require(sender.length > 0 && sender.length == amount.length);
+    
+    for(uint i = 0; i < sender.length; i++) {
+      balances[address(this)] = balances[address(this)].sub(amount[i]);
+      balances[sender[i]] = balances[sender[i]].add(amount[i]);
+      emit Transfer(address(this), sender[i], amount[i]);
+    }
   }
   
   function addPreSaleTokens(address sender, uint256 amount) external onlyAgent {
-      preSaleTokens[sender] = preSaleTokens[sender].add(amount);
-      
-      balances[address(this)] = balances[address(this)].sub(amount);
-      balances[sender] = balances[sender].add(amount);
-      emit Transfer(address(this), sender, amount);
+    preSaleTokens[sender] = preSaleTokens[sender].add(amount);
+    
+    balances[address(this)] = balances[address(this)].sub(amount);
+    balances[sender] = balances[sender].add(amount);
+    emit Transfer(address(this), sender, amount);
   }
   
   function addPreSaleTokensMulti(address[] sender, uint256[] amount) external onlyAgent {
-      require(sender.length > 0 && sender.length == amount.length);
-      
-      for(uint i = 0; i < sender.length; i++) {
-        preSaleTokens[sender[i]] = preSaleTokens[sender[i]].add(amount[i]);
-        balances[address(this)] = balances[address(this)].sub(amount[i]);
-        balances[sender[i]] = balances[sender[i]].add(amount[i]);
-        emit Transfer(address(this), sender[i], amount[i]);
-      }
+    require(sender.length > 0 && sender.length == amount.length);
+    
+    for(uint i = 0; i < sender.length; i++) {
+      preSaleTokens[sender[i]] = preSaleTokens[sender[i]].add(amount[i]);
+      balances[address(this)] = balances[address(this)].sub(amount[i]);
+      balances[sender[i]] = balances[sender[i]].add(amount[i]);
+      emit Transfer(address(this), sender[i], amount[i]);
+    }
   }
   
   function addCrowdSaleTokens(address sender, uint256 amount) external onlyAgent {
-      crowdSaleTokens[sender] = crowdSaleTokens[sender].add(amount);
-      
-      balances[address(this)] = balances[address(this)].sub(amount);
-      balances[sender] = balances[sender].add(amount);
-      emit Transfer(address(this), sender, amount);
+    crowdSaleTokens[sender] = crowdSaleTokens[sender].add(amount);
+    
+    balances[address(this)] = balances[address(this)].sub(amount);
+    balances[sender] = balances[sender].add(amount);
+    emit Transfer(address(this), sender, amount);
   }
 
   function addCrowdSaleTokensMulti(address[] sender, uint256[] amount) external onlyAgent {
-      require(sender.length > 0 && sender.length == amount.length);
-      
-      for(uint i = 0; i < sender.length; i++) {
-        crowdSaleTokens[sender[i]] = crowdSaleTokens[sender[i]].add(amount[i]);
-        balances[address(this)] = balances[address(this)].sub(amount[i]);
-        balances[sender[i]] = balances[sender[i]].add(amount[i]);
-        emit Transfer(address(this), sender[i], amount[i]);
-      }
+    require(sender.length > 0 && sender.length == amount.length);
+    
+    for(uint i = 0; i < sender.length; i++) {
+      crowdSaleTokens[sender[i]] = crowdSaleTokens[sender[i]].add(amount[i]);
+      balances[address(this)] = balances[address(this)].sub(amount[i]);
+      balances[sender[i]] = balances[sender[i]].add(amount[i]);
+      emit Transfer(address(this), sender[i], amount[i]);
+    }
   }
   
   function addFrostTokens(address sender, uint256 amount, uint256 blockTime) external onlyAgent {
 
-      totalFreezeTokens = totalFreezeTokens.add(amount);
-      require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
+    totalFreezeTokens = totalFreezeTokens.add(amount);
+    require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
 
-      freezeTokens[sender] = amount;
-      freezeTimeBlock[sender] = blockTime;
+    freezeTokens[sender] = amount;
+    freezeTimeBlock[sender] = blockTime;
   }
   
   function addFrostTokensMulti(address[] sender, uint256[] amount, uint256[] blockTime) external onlyAgent {
-      require(sender.length > 0 && sender.length == amount.length && amount.length == blockTime.length);
+    require(sender.length > 0 && sender.length == amount.length && amount.length == blockTime.length);
 
-      for(uint i = 0; i < sender.length; i++) {
-        totalFreezeTokens = totalFreezeTokens.add(amount[i]);
-        freezeTokens[sender[i]] = amount[i];
-        freezeTimeBlock[sender[i]] = blockTime[i];
-      }
-      require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
+    for(uint i = 0; i < sender.length; i++) {
+      totalFreezeTokens = totalFreezeTokens.add(amount[i]);
+      freezeTokens[sender[i]] = amount[i];
+      freezeTimeBlock[sender[i]] = blockTime[i];
+    }
+    require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
   }
   
   function transferAgent(address _agent) external onlyOwner {
-      agentAddress = _agent;
+    agentAddress = _agent;
   }
 
   function addStaff(address _staff) external onlyOwner {
-      staff.push(_staff);
+    staff.push(_staff);
   }
 
   function killFrost() external onlyOwner {
     freezing = false;
+  }
+
+  function viewStaff() public view returns (address[]) {
+    return staff;
   }
 }

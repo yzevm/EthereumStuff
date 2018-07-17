@@ -19,12 +19,12 @@ $ truffle test
 
 ## Founders Tokens
 
-> Contract "Founders" - it's special contract, which hold tokens for your team wallet(!Make sure that you change address in production contract).
-⋅⋅⋅Address teamWallet = 0x11231231231312313123132131231 - !change before deploy in main network!⋅⋅⋅
-> Team wallet can return 30% of tokens after 3 month of listing.
-> Team wallet can return 65% of tokens after 6 month of listing.
-> Team wallet can return 100% of tokens after 9 month of listing.
-> Total tokens on this contract is 8,613,000,000 / 30% of total supply.
+Contract "Founders" - it's special contract, which hold tokens for your team wallet(!Make sure that you change address in production contract).
+⋅⋅⋅Address teamWallet = 0x11231231231312313123132131231 - !change before deploy in main network!⋅⋅
+Team wallet can return 30% of tokens after 3 month of listing.
+Team wallet can return 65% of tokens after 6 month of listing.
+Team wallet can return 100% of tokens after 9 month of listing.
+Total tokens on this contract is 8,613,000,000 / 30% of total supply.
 
 
 ## Contract Management

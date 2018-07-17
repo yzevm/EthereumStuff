@@ -11,20 +11,20 @@ $ truffle test
 
 ## Token Description
 
-Name: "ALBOS Token";
-Symbol: "ALB";
-Decimals: 18;
-Total supply: 28,710,000,000 tokens
+> Name: "ALBOS Token";
+> Symbol: "ALB";
+> Decimals: 18;
+> Total supply: 28,710,000,000 tokens
 
 
 ## Founders Tokens
 
-Contract "Founders" - it's special contract, which hold tokens for your team wallet(!Make sure that you change address in production contract)
-address teamWallet = 0x11231231231312313123132131231; // !change before deploy in main network!
-Team wallet can return 30% of tokens after 3 month of listing
-Team wallet can return 65% of tokens after 6 month of listing
-Team wallet can return 100% of tokens after 9 month of listing
-Total tokens on this contract is 8,613,000,000 / 30% of total supply
+> Contract "Founders" - it's special contract, which hold tokens for your team wallet(!Make sure that you change address in production contract)
+> Address teamWallet = 0x11231231231312313123132131231; // !change before deploy in main network!
+> Team wallet can return 30% of tokens after 3 month of listing
+> Team wallet can return 65% of tokens after 6 month of listing
+> Team wallet can return 100% of tokens after 9 month of listing
+> Total tokens on this contract is 8,613,000,000 / 30% of total supply
 
 
 ## Contract Management

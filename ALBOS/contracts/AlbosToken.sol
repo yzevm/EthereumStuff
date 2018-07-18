@@ -286,11 +286,11 @@ contract Founders is Ownable {
   function viewTeamTokens() public view returns (uint256) {
 
     if (block.number >= launchBlock.add(monthSeconds.mul(9).div(secsPerBlock))) {
-      return uint(28710000000);
+      return albosAddress.balanceOf(address(this));
     } else if (block.number >= launchBlock.add(monthSeconds.mul(6).div(secsPerBlock))) {
-      return uint(28710000000).mul(65).div(100);
+      return albosAddress.balanceOf(address(this)).mul(65).div(100);
     } else if (block.number >= launchBlock.add(monthSeconds.mul(3).div(secsPerBlock))) {
-      return uint(28710000000).mul(3).div(10);
+      return albosAddress.balanceOf(address(this)).mul(3).div(10);
     } else {
       return 0;
     }
@@ -303,7 +303,7 @@ contract Founders is Ownable {
 
   function getTeamTokens(uint256 _tokens) public onlyTeam {
     uint256 tokens = _tokens.mul(10 ** 18);
-    require(withdrawTokens.add(tokens) <= viewTeamTokens().mul(10 ** 18));
+    require(withdrawTokens.add(tokens) <= viewTeamTokens());
     albosAddress.transfer(teamWallet, tokens);
     withdrawTokens = withdrawTokens.add(tokens);
   }

@@ -16,16 +16,31 @@ Symbol: "ALB"
 Decimals: 18  
 Total supply: 28,710,000,000 tokens  
 
+## Deployment steps
+
+1) Deploy Albos Contract  
+2) Take albosAddress = Albos Contract address  
+3) Deploy Founders Contract with arguments: albosAddress and _foundersdWallet  
+4) Deploy Reserved Contract with arguments: albosAddress and _reservedWallet  
+5) Go to Albos Contract and call setFoundersContract function with argument foundersAddress(address of Founders Contract)  
+5) Go to Albos Contract and call setReservedContract function with argument reservedAddress(address of Reserved Contract)  
+6) Done  
 
 ## Founders Tokens
 
-Contract "Founders" - it's special contract, which hold tokens for your team wallet(!Make sure that you change address in production contract)  
-Address teamWallet = 0x11231231231312313123132131231 - [!change before deploy in main network!](https://github.com/egorzaremba/EthereumStuff/blob/master/ALBOS/contracts/AlbosToken.sol#L274)  
+Contract "Founders" - it's special contract, which hold tokens for your team wallet
 Team wallet can return 30% of tokens after 3 month of listing  
 Team wallet can return 65% of tokens after 6 month of listing  
 Team wallet can return 100% of tokens after 9 month of listing  
-Total tokens on this contract is 8,613,000,000 / 30% of total supply  
+Total tokens on this contract is 4,306,500,000 / 15% of total supply  
 
+## Reserved Tokens
+
+Contract "Reserved" - it's special contract, which hold tokens for your team wallet
+Team wallet can return 30% of tokens after 3 month of listing  
+Team wallet can return 65% of tokens after 6 month of listing  
+Team wallet can return 100% of tokens after 9 month of listing  
+Total tokens on this contract is 2,871,000,000 / 10% of total supply  
 
 ## Contract Management
 

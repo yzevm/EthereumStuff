@@ -1,4 +1,6 @@
 const AlbosToken = artifacts.require("./AlbosToken.sol");
+const Founders = artifacts.require("./Founders.sol");
+const Reserved = artifacts.require("./Reserved.sol");
 const utils = require('./helpers/Utils');
 
 contract('AlbosToken', function(accounts) {
@@ -471,6 +473,7 @@ contract('AlbosToken', function(accounts) {
     assert.equal(result, true);
 
     await contract.startListing();
+    await contract.addUniqueSaleTokens(accounts[1], 1000);
     await contract.addPreSaleTokens(accounts[1], 1000);
     await contract.addCrowdSaleTokens(accounts[1], 1000);
     
@@ -487,10 +490,12 @@ contract('AlbosToken', function(accounts) {
     const contract = await AlbosToken.new();
     await contract.startListing();
 
-    const founderBalance30 = await contract.foundersSupply();
+    const founderBalance15 = await contract.foundersSupply();
+    const reservedBalance10 = await contract.foundersSupply();
+    await contract.addFrostTokens(accounts[9], founderBalance15, 4321);
 
     try {
-      await contract.addFrostTokens(founderBalance30, 12, 4321);
+      await contract.addFrostTokens(accounts[9], reservedBalance10, 4321);
       assert(false, "didn't throw");
     }
     catch (error) {
@@ -513,12 +518,155 @@ contract('AlbosToken', function(accounts) {
     } catch(error) {
       throw new Error(error);
     }
-
   });
 
+  it('verifies that array processing works correctly to addUniqueSaleTokens Multi', async () => {
+    const contract = await AlbosToken.new();
+    await contract.addUniqueSaleTokensMulti([accounts[1], accounts[2], accounts[3]], [4000, 1, 6000]);
+
+    const airdropFisrt = await contract.balanceOf.call(accounts[1]);
+    assert.equal(airdropFisrt.toNumber(), 4000);
+    const airdropSecond = await contract.balanceOf.call(accounts[2]);
+    assert.equal(airdropSecond.toNumber(), 1);
+    const airdropThird = await contract.balanceOf.call(accounts[3]);
+    assert.equal(airdropThird.toNumber(), 6000);
+
+    const airdropFisrt2 = await contract.uniqueTokens.call(accounts[1]);
+    assert.equal(airdropFisrt2.toNumber(), 4000);
+    const airdropSecond2 = await contract.uniqueTokens.call(accounts[2]);
+    assert.equal(airdropSecond2.toNumber(), 1);
+    const airdropThird2 = await contract.uniqueTokens.call(accounts[3]);
+    assert.equal(airdropThird2.toNumber(), 6000);
+  });
+
+  it('verifies that only the owner can initiate addUniqueSaleTokensMulti', async () => {
+    const contract = await AlbosToken.new();
+
+    try {
+      await contract.addUniqueSaleTokensMulti([accounts[1]], [6000000], { from: accounts[1] });
+      assert(false, "didn't throw");
+    }
+    catch (error) {
+      return utils.ensureException(error);
+    }
+  });
+
+  it('verifies that addUniqueSaleTokensMulti Airdrop Multi accounts fires an Transfer event', async () => {
+    const contract = await AlbosToken.new();
+    const res = await contract.addUniqueSaleTokensMulti([accounts[1], accounts[2], accounts[3]], [6000000, 123, 111]);
+    assert(res.logs.length > 0 && res.logs[0].event == 'Transfer');
+  });
+
+  it('verifies that addUniqueSaleTokens works correctly', async () => {
+    const contract = await AlbosToken.new();
+    await contract.startListing();
+    await contract.addUniqueSaleTokens(accounts[1], 1234);
+
+    const isLockedFirst = await contract.balanceOf.call(accounts[1]);
+    assert.equal(isLockedFirst.toNumber(), 1234);
+
+    const uniqueTokens = await contract.uniqueTokens.call(accounts[1]);
+    assert.equal(uniqueTokens.toNumber(), 1234);
+  });
+
+  it('verifies that only the owner can initiate addUniqueSaleTokens', async () => {
+    const contract = await AlbosToken.new();
+
+    try {
+      await contract.addUniqueSaleTokens([accounts[1]], 6000000, { from: accounts[1] });
+      assert(false, "didn't throw");
+    }
+    catch (error) {
+      return utils.ensureException(error);
+    }
+  });
+
+  it('verifies that only the owner can initiate setFoundersContract', async () => {
+    const contract = await AlbosToken.new();
+
+    try {
+      await contract.setFoundersContract(accounts[1], { from: accounts[1] });
+      assert(false, "didn't throw");
+    }
+    catch (error) {
+      return utils.ensureException(error);
+    }
+  });
+
+  it('verifies that only the owner can initiate setReservedContract', async () => {
+    const contract = await AlbosToken.new();
+
+    try {
+      await contract.setReservedContract(accounts[1], { from: accounts[1] });
+      assert(false, "didn't throw");
+    }
+    catch (error) {
+      return utils.ensureException(error);
+    }
+  });
+
+  it('verifies that founders and reversed tokens return works correctly', async () => {
+    const albos = await AlbosToken.new();
+    const founders = await Founders.new(albos.address, accounts[8]);
+    const reserved = await Reserved.new(albos.address, accounts[8]);
+
+    await albos.setFoundersContract(founders.address);
+    await albos.setReservedContract(reserved.address);
+    
+    assert.equal(await founders.albosAddress(), albos.address);
+    assert.equal(await founders.owner(), albos.address);
+    assert.equal(await reserved.albosAddress(), albos.address);
+    assert.equal(await reserved.owner(), albos.address);
+
+    assert.equal(await albos.foundersAddress(), founders.address);
+    assert.equal(await albos.reservedAddress(), reserved.address);
+
+    assert.equal(await founders.foundersWallet(), accounts[8]);
+    assert.equal(await reserved.reservedWallet(), accounts[8]);
+
+    const foundersBalance = await albos.balanceOf.call(founders.address);
+    const founderSupply = await albos.foundersSupply();
+    const reservedBalance = await albos.balanceOf.call(founders.address);
+    const reservedSupply = await albos.foundersSupply();
+
+    assert.equal(foundersBalance.toNumber(), founderSupply.toNumber());
+    assert.equal(reservedBalance.toNumber(), reservedSupply.toNumber());
+
+    await albos.startListing();
+    await founders.getFoundersTokens(0, { from: accounts[8] });
+    await reserved.getReservedTokens(0, { from: accounts[8] });
+  });
 });
 
 
+contract('Founders', function(accounts) {
+  it('verifies that only the initial wallet can get tokens', async () => {
+    const albos = await AlbosToken.new();
+    const founders = await Founders.new(albos.address, accounts[8]);
+    await albos.startListing();
 
+    try {
+      await founders.getFoundersTokens(0, { from: accounts[1] });
+      assert(false, "didn't throw");
+    }
+    catch (error) {
+      return utils.ensureException(error);
+    }
+  });
+});
 
+contract('Reserved', function(accounts) {
+  it('verifies that only the initial wallet can get tokens', async () => {
+    const albos = await AlbosToken.new();
+    const reserved = await Reserved.new(albos.address, accounts[8]);
+    await albos.startListing();
 
+    try {
+      await reserved.getReservedTokens(0, { from: accounts[1] });
+      assert(false, "didn't throw");
+    }
+    catch (error) {
+      return utils.ensureException(error);
+    }
+  });
+});

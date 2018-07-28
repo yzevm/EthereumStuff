@@ -145,9 +145,9 @@ contract BasicToken is ERC20Basic, Ownable {
     } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(3))) {
         return balances[sender].sub((uniqueTokens[sender].mul(7).div(10)).add(crowdSaleTokens[sender].mul(2).div(10)));
     } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(2))) {
-        return balances[sender].sub((preSaleTokens[sender].mul(3).div(10)).add(crowdSaleTokens[sender].mul(4).div(10)));
+        return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(3).div(10)).add(crowdSaleTokens[sender].mul(4).div(10)));
     } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock))) {
-        return balances[sender].sub((preSaleTokens[sender].mul(6).div(10)).add(crowdSaleTokens[sender].mul(6).div(10)));
+        return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(6).div(10)).add(crowdSaleTokens[sender].mul(6).div(10)));
     } else {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(9).div(10)).add(crowdSaleTokens[sender].mul(8).div(10)));
     }

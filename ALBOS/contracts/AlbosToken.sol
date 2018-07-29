@@ -104,7 +104,7 @@ contract ERC20Basic {
 contract BasicToken is ERC20Basic, Ownable {
   using SafeMath for uint256;
     
-  address[] staff;
+  mapping (address => bool) staff;
   mapping (address => uint256) balances;
   uint256 totalSupply_;
   mapping (address => uint256) public uniqueTokens;
@@ -127,12 +127,6 @@ contract BasicToken is ERC20Basic, Ownable {
   modifier afterListing() {
     require(listing == true || owner == msg.sender || agentAddress == msg.sender);
     _;
-  }
-
-  function checkStaff(address spender) public view returns(bool) {
-    for (uint i = 0; i < staff.length; i++) {
-      if (spender == staff[i]) return true;
-    }
   }
   
   function checkVesting(address sender) public view returns (uint256) {
@@ -175,7 +169,7 @@ contract BasicToken is ERC20Basic, Ownable {
   function transfer(address _to, uint256 _value) afterListing public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-    if (checkStaff(msg.sender) == false) {
+    if (!staff[msg.sender]) {
         require(_value <= checkVestingWithFrozen(msg.sender));
     }
 
@@ -212,7 +206,7 @@ contract BurnableToken is BasicToken {
    */
   function burn(uint256 _value) afterListing public {
     require(_value <= balances[msg.sender]);
-    if (checkStaff(msg.sender) == false) {
+    if (!staff[msg.sender]) {
         require(_value <= checkVestingWithFrozen(msg.sender));
     }
     // no need to require value <= totalSupply, since that would imply the
@@ -234,7 +228,7 @@ contract StandardToken is ERC20, BurnableToken {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
-    if (checkStaff(_from) == false) {
+    if (!staff[_from]) {
         require(_value <= checkVestingWithFrozen(_from));
     }
 
@@ -363,8 +357,8 @@ contract AlbosToken is StandardToken {
     emit Transfer(address(this), address(this), balances[address(this)]);
 
     agentAddress = msg.sender;
-    staff.push(owner);
-    staff.push(agentAddress);
+    staff[owner] = true;
+    staff[agentAddress] = true;
   }
   
   modifier onlyAgent() {
@@ -497,14 +491,10 @@ contract AlbosToken is StandardToken {
   }
 
   function addStaff(address _staff) external onlyOwner {
-    staff.push(_staff);
+    staff[_staff] = true;
   }
 
   function killFrost() external onlyOwner {
     freezing = false;
-  }
-
-  function viewStaff() public view returns (address[]) {
-    return staff;
   }
 }

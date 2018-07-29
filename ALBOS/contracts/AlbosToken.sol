@@ -104,7 +104,7 @@ contract ERC20Basic {
 contract BasicToken is ERC20Basic, Ownable {
   using SafeMath for uint256;
     
-  mapping (address => bool) staff;
+  mapping (address => bool) public staff;
   mapping (address => uint256) balances;
   uint256 totalSupply_;
   mapping (address => uint256) public uniqueTokens;

@@ -112,9 +112,7 @@ contract BasicToken is ERC20Basic, Ownable {
   mapping (address => uint256) public crowdSaleTokens;
   mapping (address => uint256) public freezeTokens;
   mapping (address => uint256) public freezeTimeBlock;
-  uint256 public launchBlock = 999999999999999999999999999999;
-  uint256 constant public monthSeconds = 2592000;
-  uint256 constant public secsPerBlock = 14; // 1 block per 14 seconds
+  uint256 public launchTime = 999999999999999999999999999999;
   uint256 public totalFreezeTokens = 0;
   bool public listing = false;
   bool public freezing = true;
@@ -130,17 +128,17 @@ contract BasicToken is ERC20Basic, Ownable {
   }
   
   function checkVesting(address sender) public view returns (uint256) {
-    if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(9))) {
+    if (now >= launchBlock.add(270 days)) {
         return balances[sender];
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(6))) {
+    } else if (now >= launchBlock.add(180 days)) {
         return balances[sender].sub(uniqueTokens[sender].mul(35).div(100));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(4))) {
+    } else if (now >= launchBlock.add(120 days)) {
         return balances[sender].sub(uniqueTokens[sender].mul(7).div(10));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(3))) {
+    } else if (now >= launchBlock.add(90 days)) {
         return balances[sender].sub((uniqueTokens[sender].mul(7).div(10)).add(crowdSaleTokens[sender].mul(2).div(10)));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(2))) {
+    } else if (now >= launchBlock.add(60 days)) {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(3).div(10)).add(crowdSaleTokens[sender].mul(4).div(10)));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock))) {
+    } else if (now >= launchBlock.add(30 days)) {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(6).div(10)).add(crowdSaleTokens[sender].mul(6).div(10)));
     } else {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(9).div(10)).add(crowdSaleTokens[sender].mul(8).div(10)));
@@ -282,11 +280,11 @@ contract Founders is Ownable {
   }
 
   function viewTeamTokens() public view returns (uint256) {
-    if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(9).div(albosAddress.secsPerBlock()))) {
+    if (now >= albosAddress.launchBlock().add(270 days)) {
       return albosAddress.foundersSupply();
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(6).div(albosAddress.secsPerBlock()))) {
+    } else if (now >= albosAddress.launchBlock().add(180 days)) {
       return albosAddress.foundersSupply().mul(65).div(100);
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(3).div(albosAddress.secsPerBlock()))) {
+    } else if (now >= albosAddress.launchBlock().add(90 days)) {
       return albosAddress.foundersSupply().mul(3).div(10);
     } else {
       return 0;
@@ -320,12 +318,12 @@ contract Reserved is Ownable {
   }
 
   function viewTeamTokens() public view returns (uint256) {
-    if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(9).div(albosAddress.secsPerBlock()))) {
-      return albosAddress.reservedSupply();
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(6).div(albosAddress.secsPerBlock()))) {
-      return albosAddress.reservedSupply().mul(65).div(100);
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(3).div(albosAddress.secsPerBlock()))) {
-      return albosAddress.reservedSupply().mul(3).div(10);
+    if (now >= albosAddress.launchBlock().add(270 days)) {
+      return albosAddress.foundersSupply();
+    } else if (now >= albosAddress.launchBlock().add(180 days)) {
+      return albosAddress.foundersSupply().mul(65).div(100);
+    } else if (now >= albosAddress.launchBlock().add(90 days)) {
+      return albosAddress.foundersSupply().mul(3).div(10);
     } else {
       return 0;
     }
@@ -382,7 +380,7 @@ contract AlbosToken is StandardToken {
 
   function startListing() public onlyOwner {
     require(!listing);
-    launchBlock = block.number;
+    launchTime = now;
     listing = true;
   }
 

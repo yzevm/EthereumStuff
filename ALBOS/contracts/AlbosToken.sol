@@ -104,7 +104,7 @@ contract ERC20Basic {
 contract BasicToken is ERC20Basic, Ownable {
   using SafeMath for uint256;
     
-  address[] staff;
+  mapping (address => bool) public staff;
   mapping (address => uint256) balances;
   uint256 totalSupply_;
   mapping (address => uint256) public uniqueTokens;
@@ -112,9 +112,7 @@ contract BasicToken is ERC20Basic, Ownable {
   mapping (address => uint256) public crowdSaleTokens;
   mapping (address => uint256) public freezeTokens;
   mapping (address => uint256) public freezeTimeBlock;
-  uint256 public launchBlock = 999999999999999999999999999999;
-  uint256 constant public monthSeconds = 2592000;
-  uint256 constant public secsPerBlock = 14; // 1 block per 14 seconds
+  uint256 public launchTime = 999999999999999999999999999999;
   uint256 public totalFreezeTokens = 0;
   bool public listing = false;
   bool public freezing = true;
@@ -128,25 +126,19 @@ contract BasicToken is ERC20Basic, Ownable {
     require(listing == true || owner == msg.sender || agentAddress == msg.sender);
     _;
   }
-
-  function checkStaff(address spender) public view returns(bool) {
-    for (uint i = 0; i < staff.length; i++) {
-      if (spender == staff[i]) return true;
-    }
-  }
   
   function checkVesting(address sender) public view returns (uint256) {
-    if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(9))) {
+    if (now >= launchTime.add(270 days)) {
         return balances[sender];
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(6))) {
+    } else if (now >= launchTime.add(180 days)) {
         return balances[sender].sub(uniqueTokens[sender].mul(35).div(100));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(4))) {
+    } else if (now >= launchTime.add(120 days)) {
         return balances[sender].sub(uniqueTokens[sender].mul(7).div(10));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(3))) {
+    } else if (now >= launchTime.add(90 days)) {
         return balances[sender].sub((uniqueTokens[sender].mul(7).div(10)).add(crowdSaleTokens[sender].mul(2).div(10)));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock).mul(2))) {
+    } else if (now >= launchTime.add(60 days)) {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(3).div(10)).add(crowdSaleTokens[sender].mul(4).div(10)));
-    } else if (block.number >= launchBlock.add(monthSeconds.div(secsPerBlock))) {
+    } else if (now >= launchTime.add(30 days)) {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(6).div(10)).add(crowdSaleTokens[sender].mul(6).div(10)));
     } else {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(9).div(10)).add(crowdSaleTokens[sender].mul(8).div(10)));
@@ -161,7 +153,7 @@ contract BasicToken is ERC20Basic, Ownable {
       } else {
           return checkVesting(sender).sub(freezeTokens[sender]);
       }
-        
+    
     } else {
         return checkVesting(sender);
     }
@@ -175,7 +167,7 @@ contract BasicToken is ERC20Basic, Ownable {
   function transfer(address _to, uint256 _value) afterListing public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-    if (checkStaff(msg.sender) == false) {
+    if (!staff[msg.sender]) {
         require(_value <= checkVestingWithFrozen(msg.sender));
     }
 
@@ -191,6 +183,9 @@ contract BasicToken is ERC20Basic, Ownable {
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) public view returns (uint256 balance) {
+    if (!staff[_owner]) {
+        return checkVestingWithFrozen(_owner);
+    }
     return balances[_owner];
   }
 }
@@ -212,7 +207,7 @@ contract BurnableToken is BasicToken {
    */
   function burn(uint256 _value) afterListing public {
     require(_value <= balances[msg.sender]);
-    if (checkStaff(msg.sender) == false) {
+    if (!staff[msg.sender]) {
         require(_value <= checkVestingWithFrozen(msg.sender));
     }
     // no need to require value <= totalSupply, since that would imply the
@@ -234,7 +229,7 @@ contract StandardToken is ERC20, BurnableToken {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
-    if (checkStaff(_from) == false) {
+    if (!staff[_from]) {
         require(_value <= checkVestingWithFrozen(_from));
     }
 
@@ -269,80 +264,48 @@ contract StandardToken is ERC20, BurnableToken {
   
 }
 
-contract Founders is Ownable {
+contract AlbosWallet is Ownable {
   using SafeMath for uint256;
 
   uint256 public withdrawTokens;
-  address public foundersWallet;
+  address public teamWallet;
   AlbosToken public albosAddress;
   
-  constructor(address _albosAddress, address _foundersWallet) public {
+  constructor(address _albosAddress, address _teamWallet) public {
     albosAddress = AlbosToken(_albosAddress);
     owner = albosAddress;
-    foundersWallet = _foundersWallet;
+    teamWallet = _teamWallet;
   }
 
-  modifier onlyFounders() {
-    require(msg.sender == foundersWallet);
+  modifier onlyMembers() {
+    require(msg.sender == teamWallet);
     _;
   }
 
   function viewTeamTokens() public view returns (uint256) {
-    if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(9).div(albosAddress.secsPerBlock()))) {
+    if (now >= albosAddress.launchTime().add(270 days)) {
       return albosAddress.foundersSupply();
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(6).div(albosAddress.secsPerBlock()))) {
+    } else if (now >= albosAddress.launchTime().add(180 days)) {
       return albosAddress.foundersSupply().mul(65).div(100);
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(3).div(albosAddress.secsPerBlock()))) {
+    } else if (now >= albosAddress.launchTime().add(90 days)) {
       return albosAddress.foundersSupply().mul(3).div(10);
     } else {
       return 0;
     }
   }
 
-  function getFoundersTokens(uint256 _tokens) public onlyFounders {
+  function getTokens(uint256 _tokens) public onlyMembers {
     uint256 tokens = _tokens.mul(10 ** 18);
     require(withdrawTokens.add(tokens) <= viewTeamTokens());
-    albosAddress.transfer(foundersWallet, tokens);
+    albosAddress.transfer(teamWallet, tokens);
     withdrawTokens = withdrawTokens.add(tokens);
   }
 }
 
-contract Reserved is Ownable {
-  using SafeMath for uint256;
+contract Founders is AlbosWallet {
+}
 
-  uint256 public withdrawTokens;
-  address public reservedWallet;
-  AlbosToken public albosAddress;
-  
-  constructor(address _albosAddress, address _reservedWallet) public {
-    albosAddress = AlbosToken(_albosAddress);
-    owner = albosAddress;
-    reservedWallet = _reservedWallet;
-  }
-
-  modifier onlyReserved() {
-    require(msg.sender == reservedWallet);
-    _;
-  }
-
-  function viewTeamTokens() public view returns (uint256) {
-    if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(9).div(albosAddress.secsPerBlock()))) {
-      return albosAddress.reservedSupply();
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(6).div(albosAddress.secsPerBlock()))) {
-      return albosAddress.reservedSupply().mul(65).div(100);
-    } else if (block.number >= albosAddress.launchBlock().add(albosAddress.monthSeconds().mul(3).div(albosAddress.secsPerBlock()))) {
-      return albosAddress.reservedSupply().mul(3).div(10);
-    } else {
-      return 0;
-    }
-  }
-
-  function getReservedTokens(uint256 _tokens) public onlyReserved {
-    uint256 tokens = _tokens.mul(10 ** 18);
-    require(withdrawTokens.add(tokens) <= viewTeamTokens());
-    albosAddress.transfer(reservedWallet, tokens);
-    withdrawTokens = withdrawTokens.add(tokens);
-  }
+contract Reserved is AlbosWallet {
 }
 
 contract AlbosToken is StandardToken {
@@ -363,8 +326,8 @@ contract AlbosToken is StandardToken {
     emit Transfer(address(this), address(this), balances[address(this)]);
 
     agentAddress = msg.sender;
-    staff.push(owner);
-    staff.push(agentAddress);
+    staff[owner] = true;
+    staff[agentAddress] = true;
   }
   
   modifier onlyAgent() {
@@ -388,7 +351,7 @@ contract AlbosToken is StandardToken {
 
   function startListing() public onlyOwner {
     require(!listing);
-    launchBlock = block.number;
+    launchTime = now;
     listing = true;
   }
 
@@ -465,13 +428,20 @@ contract AlbosToken is StandardToken {
     }
   }
   
-  function addFrostTokens(address sender, uint256 amount, uint256 blockTime) external onlyAgent {
+  function addFrostTokens(address sender, uint256 amount, uint256 blockTime) public onlyAgent {
 
     totalFreezeTokens = totalFreezeTokens.add(amount);
     require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
 
     freezeTokens[sender] = amount;
     freezeTimeBlock[sender] = blockTime;
+  }
+  
+  function transferAndFrostTokens(address sender, uint256 amount, uint256 blockTime) external onlyAgent {
+    balances[address(this)] = balances[address(this)].sub(amount);
+    balances[sender] = balances[sender].add(amount);
+    emit Transfer(address(this), sender, amount);
+    addFrostTokens(sender, amount, blockTime);
   }
   
   function addFrostTokensMulti(address[] sender, uint256[] amount, uint256[] blockTime) external onlyAgent {
@@ -490,14 +460,10 @@ contract AlbosToken is StandardToken {
   }
 
   function addStaff(address _staff) external onlyOwner {
-    staff.push(_staff);
+    staff[_staff] = true;
   }
 
   function killFrost() external onlyOwner {
     freezing = false;
-  }
-
-  function viewStaff() public view returns (address[]) {
-    return staff;
   }
 }

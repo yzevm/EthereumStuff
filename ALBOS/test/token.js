@@ -532,14 +532,15 @@ contract('AlbosToken', function(accounts) {
 
   it('verifies that founders and reversed tokens return works correctly', async () => {
     const albos = await AlbosToken.new();
-    const wallet = await AlbosWallet.new(albos.address, accounts[8]);
+    const wallet = await AlbosWallet.new(albos.address, accounts[8], accounts[9]);
 
     await albos.setTeamContract(wallet.address);
     
     assert.equal(await wallet.albosAddress(), albos.address);
     assert.equal(await wallet.owner(), albos.address);
     assert.equal(await albos.albosWallet(), wallet.address);
-    assert.equal(await wallet.teamWallet(), accounts[8]);
+    assert.equal(await wallet.foundersAddress(), accounts[8]);
+    assert.equal(await wallet.reservedAddress(), accounts[9]);
 
     const albosBalance = await albos.balanceOf.call(albos.address);
     const walletBalance = await albos.balanceOf.call(wallet.address);
@@ -548,7 +549,7 @@ contract('AlbosToken', function(accounts) {
     console.log(walletBalance);
 
     await albos.startListing();
-    await wallet.getTokens(0, { from: accounts[8] });
+    await wallet.getFoundersTokens(0, { from: accounts[8] });
   });
 });
 
@@ -560,11 +561,11 @@ contract('AlbosWallet', function(accounts) {
   })
 
   it('verifies that only the initial wallet can get tokens', async () => {
-    const albosWallet = await AlbosWallet.new(albos.address, accounts[8]);
+    const albosWallet = await AlbosWallet.new(albos.address, accounts[8], accounts[9]);
     await albos.startListing();
 
     try {
-      await albosWallet.getTokens(0, { from: accounts[1] });
+      await albosWallet.getFoundersTokens(0, { from: accounts[1] });
       assert(false, "didn't throw");
     }
     catch (error) {

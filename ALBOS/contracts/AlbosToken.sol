@@ -267,38 +267,68 @@ contract StandardToken is ERC20, BurnableToken {
 contract AlbosWallet is Ownable {
   using SafeMath for uint256;
 
-  uint256 public withdrawTokens;
-  address public teamWallet;
+  uint256 public withdrawFoundersTokens;
+  uint256 public withdrawReservedTokens;
+
+  address public foundersAddress;
+  address public reservedAddress;
+
   AlbosToken public albosAddress;
   
-  constructor(address _albosAddress, address _teamWallet) public {
+  constructor(address _albosAddress, address _foundersAddress, address _reservedAddress) public {
     albosAddress = AlbosToken(_albosAddress);
     owner = albosAddress;
-    teamWallet = _teamWallet;
+
+    foundersAddress = _foundersAddress;
+    reservedAddress = _reservedAddress;
   }
 
-  modifier onlyMembers() {
-    require(msg.sender == teamWallet);
+  modifier onlyFounders() {
+    require(msg.sender == foundersAddress);
     _;
   }
 
-  function viewTeamTokens() public view returns (uint256) {
+  modifier onlyReserved() {
+    require(msg.sender == reservedAddress);
+    _;
+  }
+
+  function viewFoundersTokens() public view returns (uint256) {
     if (now >= albosAddress.launchTime().add(270 days)) {
-      return albosAddress.foundersSupply().add(albosAddress.reservedSupply());
+      return albosAddress.foundersSupply();
     } else if (now >= albosAddress.launchTime().add(180 days)) {
-      return (albosAddress.foundersSupply().add(albosAddress.reservedSupply())).mul(65).div(100);
+      return albosAddress.foundersSupply().mul(65).div(100);
     } else if (now >= albosAddress.launchTime().add(90 days)) {
-      return (albosAddress.foundersSupply().add(albosAddress.reservedSupply())).mul(3).div(10);
+      return albosAddress.foundersSupply().mul(3).div(10);
     } else {
       return 0;
     }
   }
 
-  function getTokens(uint256 _tokens) public onlyMembers {
+  function viewReservedTokens() public view returns (uint256) {
+    if (now >= albosAddress.launchTime().add(270 days)) {
+      return albosAddress.reservedSupply();
+    } else if (now >= albosAddress.launchTime().add(180 days)) {
+      return albosAddress.reservedSupply().mul(65).div(100);
+    } else if (now >= albosAddress.launchTime().add(90 days)) {
+      return albosAddress.reservedSupply().mul(3).div(10);
+    } else {
+      return 0;
+    }
+  }
+
+  function getFoundersTokens(uint256 _tokens) public onlyFounders {
     uint256 tokens = _tokens.mul(10 ** 18);
-    require(withdrawTokens.add(tokens) <= viewTeamTokens());
-    albosAddress.transfer(teamWallet, tokens);
-    withdrawTokens = withdrawTokens.add(tokens);
+    require(withdrawFoundersTokens.add(tokens) <= viewFoundersTokens());
+    albosAddress.transfer(foundersAddress, tokens);
+    withdrawFoundersTokens = withdrawFoundersTokens.add(tokens);
+  }
+
+  function getReservedTokens(uint256 _tokens) public onlyReserved {
+    uint256 tokens = _tokens.mul(10 ** 18);
+    require(withdrawReservedTokens.add(tokens) <= viewReservedTokens());
+    albosAddress.transfer(reservedAddress, tokens);
+    withdrawReservedTokens = withdrawReservedTokens.add(tokens);
   }
 }
 

@@ -128,17 +128,17 @@ contract BasicToken is ERC20Basic, Ownable {
   }
   
   function checkVesting(address sender) public view returns (uint256) {
-    if (now >= launchBlock.add(270 days)) {
+    if (now >= launchTime.add(270 days)) {
         return balances[sender];
-    } else if (now >= launchBlock.add(180 days)) {
+    } else if (now >= launchTime.add(180 days)) {
         return balances[sender].sub(uniqueTokens[sender].mul(35).div(100));
-    } else if (now >= launchBlock.add(120 days)) {
+    } else if (now >= launchTime.add(120 days)) {
         return balances[sender].sub(uniqueTokens[sender].mul(7).div(10));
-    } else if (now >= launchBlock.add(90 days)) {
+    } else if (now >= launchTime.add(90 days)) {
         return balances[sender].sub((uniqueTokens[sender].mul(7).div(10)).add(crowdSaleTokens[sender].mul(2).div(10)));
-    } else if (now >= launchBlock.add(60 days)) {
+    } else if (now >= launchTime.add(60 days)) {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(3).div(10)).add(crowdSaleTokens[sender].mul(4).div(10)));
-    } else if (now >= launchBlock.add(30 days)) {
+    } else if (now >= launchTime.add(30 days)) {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(6).div(10)).add(crowdSaleTokens[sender].mul(6).div(10)));
     } else {
         return balances[sender].sub(uniqueTokens[sender].add(preSaleTokens[sender].mul(9).div(10)).add(crowdSaleTokens[sender].mul(8).div(10)));
@@ -280,11 +280,11 @@ contract AlbosWallet is Ownable {
   }
 
   function viewTeamTokens() public view returns (uint256) {
-    if (now >= albosAddress.launchBlock().add(270 days)) {
+    if (now >= albosAddress.launchTime().add(270 days)) {
       return albosAddress.foundersSupply();
-    } else if (now >= albosAddress.launchBlock().add(180 days)) {
+    } else if (now >= albosAddress.launchTime().add(180 days)) {
       return albosAddress.foundersSupply().mul(65).div(100);
-    } else if (now >= albosAddress.launchBlock().add(90 days)) {
+    } else if (now >= albosAddress.launchTime().add(90 days)) {
       return albosAddress.foundersSupply().mul(3).div(10);
     } else {
       return 0;

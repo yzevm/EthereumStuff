@@ -284,11 +284,11 @@ contract AlbosWallet is Ownable {
 
   function viewTeamTokens() public view returns (uint256) {
     if (now >= albosAddress.launchTime().add(270 days)) {
-      return albosAddress.foundersSupply();
+      return albosAddress.foundersSupply().add(albosAddress.reservedSupply());
     } else if (now >= albosAddress.launchTime().add(180 days)) {
-      return albosAddress.foundersSupply().mul(65).div(100);
+      return (albosAddress.foundersSupply().add(albosAddress.reservedSupply())).mul(65).div(100);
     } else if (now >= albosAddress.launchTime().add(90 days)) {
-      return albosAddress.foundersSupply().mul(3).div(10);
+      return (albosAddress.foundersSupply().add(albosAddress.reservedSupply())).mul(3).div(10);
     } else {
       return 0;
     }

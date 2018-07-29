@@ -465,13 +465,20 @@ contract AlbosToken is StandardToken {
     }
   }
   
-  function addFrostTokens(address sender, uint256 amount, uint256 blockTime) external onlyAgent {
+  function addFrostTokens(address sender, uint256 amount, uint256 blockTime) public onlyAgent {
 
     totalFreezeTokens = totalFreezeTokens.add(amount);
     require(totalFreezeTokens <= totalSupply_.mul(2).div(10));
 
     freezeTokens[sender] = amount;
     freezeTimeBlock[sender] = blockTime;
+  }
+  
+  function transferAndFrostTokens(address sender, uint256 amount, uint256 blockTime) external onlyAgent {
+    balances[address(this)] = balances[address(this)].sub(amount);
+    balances[sender] = balances[sender].add(amount);
+    emit Transfer(address(this), sender, amount);
+    addFrostTokens(sender, amount, blockTime);
   }
   
   function addFrostTokensMulti(address[] sender, uint256[] amount, uint256[] blockTime) external onlyAgent {

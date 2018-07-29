@@ -183,6 +183,9 @@ contract BasicToken is ERC20Basic, Ownable {
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) public view returns (uint256 balance) {
+    if (!staff[_owner]) {
+        return checkVestingWithFrozen(_owner);
+    }
     return balances[_owner];
   }
 }

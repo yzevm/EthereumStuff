@@ -148,7 +148,7 @@ contract BasicToken is ERC20Basic, Ownable {
   function checkVestingWithFrozen(address sender) public view returns (uint256) {
     if (freezing) {
         
-      if (freezeTimeBlock[sender] <= block.number) {
+      if (freezeTimeBlock[sender] <= now) {
           return checkVesting(sender);
       } else {
           return checkVesting(sender).sub(freezeTokens[sender]);
@@ -302,12 +302,6 @@ contract AlbosWallet is Ownable {
   }
 }
 
-contract Founders is AlbosWallet {
-}
-
-contract Reserved is AlbosWallet {
-}
-
 contract AlbosToken is StandardToken {
   string constant public name = "ALBOS Token";
   string constant public symbol = "ALB";
@@ -316,14 +310,12 @@ contract AlbosToken is StandardToken {
   uint256 public INITIAL_SUPPLY = uint256(28710000000).mul(10 ** decimals); // 28,710,000,000 tokens
   uint256 public foundersSupply = uint256(4306500000).mul(10 ** decimals); // 4,306,500,000 tokens
   uint256 public reservedSupply = uint256(2871000000).mul(10 ** decimals); // 2,871,000,000 tokens
-  Founders public foundersAddress;
-  Reserved public reservedAddress;
+  AlbosWallet public albosWallet;
   
   constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
-
-    balances[address(this)] = totalSupply_.sub(foundersSupply).sub(reservedSupply);
-    emit Transfer(address(this), address(this), balances[address(this)]);
+    balances[address(this)] = totalSupply_;
+    emit Transfer(0x0, address(this), totalSupply_);
 
     agentAddress = msg.sender;
     staff[owner] = true;
@@ -335,24 +327,19 @@ contract AlbosToken is StandardToken {
     _;
   }
 
-  function setFoundersContract(address _foundersAddress) external onlyOwner {
-    foundersAddress = Founders(_foundersAddress);
-    balances[foundersAddress] = balances[foundersAddress].add(foundersSupply);
-    balances[address(this)] = balances[address(this)].sub(foundersSupply);
-    emit Transfer(address(this), foundersAddress, foundersSupply);
-  }
-  
-  function setReservedContract(address _reservedAddress) external onlyOwner {
-    reservedAddress = Reserved(_reservedAddress);
-    balances[reservedAddress] = balances[reservedAddress].add(reservedSupply);
-    balances[address(this)] = balances[address(this)].sub(reservedSupply);
-    emit Transfer(address(this), reservedAddress, reservedSupply);
-  }
-
   function startListing() public onlyOwner {
     require(!listing);
     launchTime = now;
     listing = true;
+  }
+
+  function setTeamContract(address _albosWallet) external onlyOwner {
+
+    albosWallet = AlbosWallet(_albosWallet);
+
+    balances[address(albosWallet)] = balances[address(albosWallet)].add(foundersSupply).add(reservedSupply);
+    balances[address(this)] = balances[address(this)].sub(foundersSupply).sub(reservedSupply);
+     emit Transfer(address(this), address(albosWallet), balances[address(albosWallet)]);
   }
 
   function addUniqueSaleTokens(address sender, uint256 amount) external onlyAgent {

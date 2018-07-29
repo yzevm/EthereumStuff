@@ -153,7 +153,7 @@ contract BasicToken is ERC20Basic, Ownable {
       } else {
           return checkVesting(sender).sub(freezeTokens[sender]);
       }
-        
+    
     } else {
         return checkVesting(sender);
     }
@@ -261,21 +261,21 @@ contract StandardToken is ERC20, BurnableToken {
   
 }
 
-contract Founders is Ownable {
+contract AlbosWallet is Ownable {
   using SafeMath for uint256;
 
   uint256 public withdrawTokens;
-  address public foundersWallet;
+  address public teamWallet;
   AlbosToken public albosAddress;
   
-  constructor(address _albosAddress, address _foundersWallet) public {
+  constructor(address _albosAddress, address _teamWallet) public {
     albosAddress = AlbosToken(_albosAddress);
     owner = albosAddress;
-    foundersWallet = _foundersWallet;
+    teamWallet = _teamWallet;
   }
 
-  modifier onlyFounders() {
-    require(msg.sender == foundersWallet);
+  modifier onlyMembers() {
+    require(msg.sender == teamWallet);
     _;
   }
 
@@ -291,50 +291,18 @@ contract Founders is Ownable {
     }
   }
 
-  function getFoundersTokens(uint256 _tokens) public onlyFounders {
+  function getTokens(uint256 _tokens) public onlyMembers {
     uint256 tokens = _tokens.mul(10 ** 18);
     require(withdrawTokens.add(tokens) <= viewTeamTokens());
-    albosAddress.transfer(foundersWallet, tokens);
+    albosAddress.transfer(teamWallet, tokens);
     withdrawTokens = withdrawTokens.add(tokens);
   }
 }
 
-contract Reserved is Ownable {
-  using SafeMath for uint256;
+contract Founders is AlbosWallet {
+}
 
-  uint256 public withdrawTokens;
-  address public reservedWallet;
-  AlbosToken public albosAddress;
-  
-  constructor(address _albosAddress, address _reservedWallet) public {
-    albosAddress = AlbosToken(_albosAddress);
-    owner = albosAddress;
-    reservedWallet = _reservedWallet;
-  }
-
-  modifier onlyReserved() {
-    require(msg.sender == reservedWallet);
-    _;
-  }
-
-  function viewTeamTokens() public view returns (uint256) {
-    if (now >= albosAddress.launchBlock().add(270 days)) {
-      return albosAddress.foundersSupply();
-    } else if (now >= albosAddress.launchBlock().add(180 days)) {
-      return albosAddress.foundersSupply().mul(65).div(100);
-    } else if (now >= albosAddress.launchBlock().add(90 days)) {
-      return albosAddress.foundersSupply().mul(3).div(10);
-    } else {
-      return 0;
-    }
-  }
-
-  function getReservedTokens(uint256 _tokens) public onlyReserved {
-    uint256 tokens = _tokens.mul(10 ** 18);
-    require(withdrawTokens.add(tokens) <= viewTeamTokens());
-    albosAddress.transfer(reservedWallet, tokens);
-    withdrawTokens = withdrawTokens.add(tokens);
-  }
+contract Reserved is AlbosWallet {
 }
 
 contract AlbosToken is StandardToken {

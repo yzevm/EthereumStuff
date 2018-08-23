@@ -457,6 +457,7 @@ contract TokenData is Ownable {
             require(totalAirdropTokens.add(amount[i]) <= totalWRD.mul(5).div(100));
             wrdToken.transfer(sender[i], amount[i]);
             airdropTokens[sender[i]] = amount[i];
+            updateBonus(sender[i]);
             totalAirdropTokens = totalAirdropTokens.add(amount[i]);
         }
     }
@@ -468,6 +469,7 @@ contract TokenData is Ownable {
             require(totalPresaleTokens.add(amount[i]) <= totalWRD.mul(15).div(100));
             wrdToken.transfer(sender[i], amount[i]);
             presaleTokens[sender[i]] = amount[i];
+            updateBonus(sender[i]);
             totalPresaleTokens = totalPresaleTokens.add(amount[i]);
         }
     }

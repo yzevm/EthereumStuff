@@ -410,7 +410,7 @@ contract TokenData is Ownable {
 
     function updateBonus(address _holder) public returns (bool) {
         uint256 pastMonths = (now.sub(lastUpdate[_holder].mul(month).add(startTime[msg.sender]))).div(month);
-        if (pastMonths > 0) {
+        if (startTime[msg.sender] != 0 && pastMonths > 0) {
             uint256[2] memory arr = lookBonus(_holder);
             
             WRDbalances[_holder] = WRDbalances[_holder].add(arr[0]);
@@ -426,11 +426,13 @@ contract TokenData is Ownable {
         uint[2] memory arr;
         uint newABonus;
         
-        uint pastMonths = (now.sub(lastUpdate[_holder].mul(month).add(startTime[msg.sender]))).div(month);
-        for (uint i = 0; i < pastMonths; i++) {
-            newABonus = arr[0].add((WR2balances[_holder].add(arr[1])).div(divBonus));
-            arr[1] = arr[1].add((lookBalanceWRD(_holder).add(arr[0])).div(divBonus));
-            arr[0] = newABonus;
+        if (startTime[msg.sender] != 0) {
+            uint pastMonths = (now.sub(lastUpdate[_holder].mul(month).add(startTime[msg.sender]))).div(month);
+            for (uint i = 0; i < pastMonths; i++) {
+                newABonus = arr[0].add((WR2balances[_holder].add(arr[1])).div(divBonus));
+                arr[1] = arr[1].add((lookBalanceWRD(_holder).add(arr[0])).div(divBonus));
+                arr[0] = newABonus;
+            }
         }
         
         return arr;
@@ -458,6 +460,9 @@ contract TokenData is Ownable {
             wrdToken.transfer(sender[i], amount[i]);
             airdropTokens[sender[i]] = amount[i];
             updateBonus(sender[i]);
+            if (startTime[sender[i]] == 0) {
+                startTime[sender[i]] = now;
+            }
             totalAirdropTokens = totalAirdropTokens.add(amount[i]);
         }
     }
@@ -470,6 +475,9 @@ contract TokenData is Ownable {
             wrdToken.transfer(sender[i], amount[i]);
             presaleTokens[sender[i]] = amount[i];
             updateBonus(sender[i]);
+            if (startTime[sender[i]] == 0) {
+                startTime[sender[i]] = now;
+            }
             totalPresaleTokens = totalPresaleTokens.add(amount[i]);
         }
     }

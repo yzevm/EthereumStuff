@@ -59,7 +59,14 @@ Listing variable show current status of listing, after listing you should call s
 ## Different tokens conditions
 
 addPrivateSaleTokens - allow owner and admin to transfer tokens from contract to user  
-addPrivateSaleTokensMulti - allow owner and admin to transfer tokens from contract to users  
+addPrivateSaleTokensMulti - allow owner and admin to transfer tokens from contract to users
+
+addUniqueSaleTokens - allow owner and admin to transfer tokens with uniqueTokens lock-up from contract to user  
+addUniqueSaleTokensMulti - allow owner and admin to transfer tokens with uniqueTokens lock-up from contract to users  
+After purchase 0% of tokens can be transferable  
+After 3 months of purchase only 30% of tokens can be transferable 
+After 6 months of purchase only 65% of tokens can be transferable 
+After 9 months of purchase 100% of tokens can be transferable 
 
 addPreSaleTokens - allow owner and admin to transfer tokens with presale lock-up from contract to user  
 addPreSaleTokensMulti - allow owner and admin to transfer tokens with presale lock-up from contract to users  

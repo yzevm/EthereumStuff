@@ -132,18 +132,17 @@ contract Project424_2 {
 
     (uint256 getBalanceWithdrawalPercent, uint256 getBalanceIncomePercent) = getBalancePercents();
     uint currentDeposit = user.deposit;
-    uint depositBefore = user.deposit;
     
     if (daysDuration == 0) {
       return withdrawal.sub(withdrawal.mul(WITHDRAWAL_PERCENT.add(getBalanceWithdrawalPercent)).div(ONE_HUNDREDS_PERCENTS));
     }
 
-    for (uint256 i = 0; i < daysDuration; i++ ) {
-      depositBefore = currentDeposit;
+    for (uint256 i = 0; i < daysDuration; i++) {
       currentDeposit = currentDeposit.add(currentDeposit.mul(INCOME_PERCENT.add(getBalanceIncomePercent)).div(ONE_HUNDREDS_PERCENTS));
 
-      if (currentDeposit > user.deposit.add(user.deposit.mul(INCOME_MAX_PERCENT).div(ONE_HUNDREDS_PERCENTS))) {
-        withdrawal = depositBefore.add(depositBefore.mul(INCOME_PERCENT.add(getBalanceIncomePercent)).div(ONE_HUNDREDS_PERCENTS));
+      if (currentDeposit >= user.deposit.add(user.deposit.mul(INCOME_MAX_PERCENT).div(ONE_HUNDREDS_PERCENTS))) {
+        withdrawal = user.deposit.add(user.deposit.mul(INCOME_MAX_PERCENT).div(ONE_HUNDREDS_PERCENTS));
+
         break;
       } else {
         withdrawal = currentDeposit.sub(currentDeposit.mul(WITHDRAWAL_PERCENT.add(getBalanceWithdrawalPercent)).div(ONE_HUNDREDS_PERCENTS));

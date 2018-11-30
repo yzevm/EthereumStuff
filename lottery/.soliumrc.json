@@ -1,0 +1,9 @@
+{
+  "extends": "solium:all",
+  "plugins": ["security"],
+  "rules": {
+    "security/enforce-explicit-visibility": ["error"],
+    "security/no-block-members": ["off"],
+    "security/no-inline-assembly": ["warning"]
+  }
+}

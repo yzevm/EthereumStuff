@@ -83,9 +83,7 @@ contract Lottery {
     event DepositAdded(address indexed investor, uint256 indexed depositsCount, uint256 amount);
     event UserDividendPayed(address indexed investor, uint256 dividend);
     event DepositDividendPayed(address indexed investor, uint256 indexed index, uint256 deposit, uint256 totalPayed, uint256 dividend);
-    event ReferrerPayed(address indexed investor, address indexed referrer, uint256 amount, uint256 refAmount);
     event FeePayed(address indexed investor, uint256 amount);
-    event TotalDepositsChanged(uint256 totalDeposits);
     event BalanceChanged(uint256 balance);
     
     function() public payable {
@@ -113,6 +111,13 @@ contract Lottery {
             uint256 withdrawRate = dividendRate(msg.sender, i);
             user.deposits[i].withdrawedRate = user.deposits[i].withdrawedRate.add(withdrawRate);
             dividendsSum = dividendsSum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
+            emit DepositDividendPayed(
+                msg.sender,
+                i,
+                user.deposits[i].amount,
+                user.deposits[i].withdrawedRate.div(ONE_HUNDRED_PERCENTS).div(1 days),
+                withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days)
+            );
         }
         dividendsSum = dividendsSum.add(user.referBonus);
         
@@ -161,7 +166,6 @@ contract Lottery {
             if (user.referrer != address(0)) {
                 uint256 refAmount = msg.value.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
                 users[wave][user.referrer].referBonus = users[wave][user.referrer].referBonus.add(refAmount);
-                emit ReferrerPayed(msg.sender, user.referrer, msg.value, refAmount);
             }
 
             // Marketing and Team fee

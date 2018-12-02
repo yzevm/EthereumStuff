@@ -54,14 +54,14 @@ contract Lottery {
     uint256 public MARKETING__AND_TEAM_FEE = 1000;                      // 10%
     uint256 public referralPercents = 1000;                             // 10%
     uint256 constant public MAX_USER_DEPOSITS_COUNT = 50;               // 50 times
+    uint256 constant public MAX_DIVIDEND_RATE = 25000;                  // 250%
     uint256 constant public MINIMUM_DEPOSIT = 100 finney;               // 0.1 eth
-    uint256 constant public MAX_DEPOSIT_TIME = 50 days;                 // 50 days
     uint256 public wave = 0;
 
     struct Deposit {
-        uint256 time;
         uint256 amount;
         uint256 interest;
+        uint256 withdrawedRate;
     }
 
     struct User {
@@ -89,44 +89,49 @@ contract Lottery {
     event BalanceChanged(uint256 balance);
     
     function() public payable {
-        User storage user = users[wave][msg.sender];
-
+        
         // Dividends
-        uint256[] memory dividends = dividendsForUser(msg.sender);
-        uint256 dividendsSum = _dividendsSum(dividends).add(user.referBonus);
-        if (dividendsSum > 0) {
-            if (dividendsSum >= address(this).balance) {
-                dividendsSum = address(this).balance;
-                running = false;
-            }
-            
-            user.referBonus = 0;
-            user.lastPayment = now;
-            msg.sender.transfer(dividendsSum);
-            emit UserDividendPayed(msg.sender, dividendsSum);
-            
-            for (uint i = 0; i < dividends.length; i++) {
-                emit DepositDividendPayed(
-                    msg.sender,
-                    i,
-                    user.deposits[i].amount,
-                    dividendsForAmountAndTime(user.deposits[i].amount, now.sub(user.deposits[i].time), user.deposits[i].interest),
-                    dividends[i]
-                );
-            }
-
-            // Cleanup deposits array a bit
-            for (i = 0; i < user.deposits.length; i++) {
-                if (now >= user.deposits[i].time.add(MAX_DEPOSIT_TIME)) {
-                    user.deposits[i] = user.deposits[user.deposits.length - 1];
-                    user.deposits.length -= 1;
-                    i -= 1;
-                }
-            }
-        }
+        withdrawDividends();
 
         // Deposit
-        if (msg.value >= MINIMUM_DEPOSIT) {
+        if(msg.value > 0) doInvest();
+        
+        emit BalanceChanged(address(this).balance);
+        
+        // Reset
+        if (address(this).balance == 0) {
+            wave = wave.add(1);
+            running = true;
+        }
+    }
+        
+    function withdrawDividends() internal returns(bool) {
+        User storage user = users[wave][msg.sender];
+        
+        uint256 dividendsSum;
+        for (uint i = 0; i < user.deposits.length; i++) {
+            uint256 withdrawRate = dividendRate(msg.sender, i);
+            user.deposits[i].withdrawedRate = user.deposits[i].withdrawedRate.add(withdrawRate);
+            dividendsSum = dividendsSum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
+        }
+        dividendsSum = dividendsSum.add(user.referBonus);
+        
+        if (dividendsSum > 0) {
+            user.referBonus = 0;
+            user.lastPayment = now;
+            msg.sender.transfer(min(dividendsSum, address(this).balance));
+            emit UserDividendPayed(msg.sender, dividendsSum);
+            return true;
+        }
+        return false;
+    }
+
+    function doInvest() internal returns(bool) {
+        User storage user = users[wave][msg.sender];
+        if (msg.value < MINIMUM_DEPOSIT) {
+            if (msg.value > 0) msg.sender.transfer(msg.value);
+            return false;
+        } else {
             if (user.firstTime == 0) {
                 user.firstTime = now;
                 user.lastPayment = now;
@@ -135,9 +140,9 @@ contract Lottery {
             
             // Create deposit
             user.deposits.push(Deposit({
-                time: now,
                 amount: msg.value,
-                interest: getUserInterest(msg.sender)
+                interest: getUserInterest(msg.sender),
+                withdrawedRate: 0
             }));
             require(user.deposits.length <= MAX_USER_DEPOSITS_COUNT, "Too many deposits per user");
             emit DepositAdded(msg.sender, user.deposits.length, msg.value);
@@ -147,7 +152,7 @@ contract Lottery {
                 address newReferrer = _bytesToAddress(msg.data);
                 if (newReferrer != address(0) && newReferrer != msg.sender && users[wave][newReferrer].firstTime > 0) {
                     user.referrer = newReferrer;
-                    _addReferralAmount(newReferrer);
+                    users[wave][newReferrer].referralAmount += 1;
                     emit ReferrerAdded(msg.sender, newReferrer);
                 }
             }
@@ -163,32 +168,12 @@ contract Lottery {
             uint256 marketingAndTeamFee = msg.value.mul(MARKETING__AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
             marketingAndTeam.transfer(marketingAndTeamFee); // solium-disable-line security/no-send
             emit FeePayed(msg.sender, marketingAndTeamFee);
+            
+            return true;
         }
 
-        emit BalanceChanged(address(this).balance);
-
-        // Reset
-        if (!running) {
-            wave = wave.add(1);
-            running = true;
-        }
     }
     
-    function changeInterest(uint256[] interestList) external {
-        require(address(msg.sender) == owner);
-        DAILY_INTEREST = interestList;
-    }
-    
-    function changeTeamFee(uint256 feeRate) external {
-        require(address(msg.sender) == owner);
-        MARKETING__AND_TEAM_FEE = feeRate;
-    }
-    
-    function _addReferralAmount(address wallet) internal {
-        User storage userFromReferral = users[wave][wallet];
-        userFromReferral.referralAmount += 1;
-    }
-
     function getUserInterest(address wallet) public view returns (uint256) {
         User storage user = users[wave][wallet];
         if (user.referralAmount == 0) {
@@ -202,50 +187,42 @@ contract Lottery {
         }
     }
 
-    function depositsCountForUser(address wallet) public view returns(uint256) {
-        return users[wave][wallet].deposits.length;
-    }
-
-    function depositForUser(address wallet, uint256 index) public view returns(uint256 time, uint256 amount) {
-        time = users[wave][wallet].deposits[index].time;
-        amount = users[wave][wallet].deposits[index].amount;
-    }
-
-    function dividendsSumForUser(address wallet) public view returns(uint256 dividendsSum) {
-        return _dividendsSum(dividendsForUser(wallet));
-    }
-
-    function dividendsForUser(address wallet) public view returns(uint256[] dividends) {
-        User storage user = users[wave][wallet];
-        dividends = new uint256[](user.deposits.length);
-
-        for (uint i = 0; i < user.deposits.length; i++) {
-            uint256 duration = now.sub(user.lastPayment);
-            uint256 howOld = now.sub(user.deposits[i].time);
-            if (howOld > MAX_DEPOSIT_TIME) {
-                uint256 overtime = howOld.sub(MAX_DEPOSIT_TIME);
-                duration = duration.sub(overtime);
-            }
-            dividends[i] = dividendsForAmountAndTime(user.deposits[i].amount, duration, user.deposits[i].interest);
-        }
-    }
-
-    function dividendsForAmountAndTime(uint256 amount, uint256 duration, uint256 interest) public pure returns(uint256) {
-        return amount
-            .mul(interest).div(ONE_HUNDRED_PERCENTS)
-            .mul(duration).div(1 days);
-    }
-
     function _bytesToAddress(bytes data) private pure returns(address addr) {
         // solium-disable-next-line security/no-inline-assembly
         assembly {
             addr := mload(add(data, 20)) 
         }
     }
+    
+    function min(uint256 a, uint256 b) internal pure returns(uint256) {
+        if(a < b) return a;
+        return b;
+    }
 
-    function _dividendsSum(uint256[] dividends) private pure returns(uint256 dividendsSum) {
-        for (uint i = 0; i < dividends.length; i++) {
-            dividendsSum = dividendsSum.add(dividends[i]);
+    function dividendRate(address wallet, uint256 index) internal view returns(uint256 rate) {
+        User memory user = users[wave][wallet];
+        uint256 duration = now.sub(user.lastPayment);
+        rate = user.deposits[index].interest.mul(duration);
+        uint256 leftRate = MAX_DIVIDEND_RATE.sub(user.deposits[index].withdrawedRate);
+        rate = min(rate, leftRate);
+    }
+    
+    function dividendsSumForUser(address wallet) external view returns(uint256 dividendsSum) {
+        User memory user = users[wave][wallet];
+        for (uint i = 0; i < user.deposits.length; i++) {
+            uint256 withdrawRate = dividendRate(wallet, i);
+            dividendsSum = dividendsSum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
         }
+        dividendsSum = min(dividendsSum, address(this).balance);
+    }
+    
+    function changeInterest(uint256[] interestList) external {
+        require(address(msg.sender) == owner);
+        DAILY_INTEREST = interestList;
+    }
+    
+    function changeTeamFee(uint256 feeRate) external {
+        require(address(msg.sender) == owner);
+        MARKETING__AND_TEAM_FEE = feeRate;
     }
 }

@@ -75,7 +75,6 @@ contract Lottery {
 
     address public marketingAndTeam = 0x1111111111111111111111111111111111111111; // need to change
     address public owner = 0x1111111111111111111111111111111111111111;
-    uint256 public totalDeposits;
     bool public running = true;
     mapping(uint256 => mapping(address => User)) public users;
 
@@ -142,10 +141,6 @@ contract Lottery {
             }));
             require(user.deposits.length <= MAX_USER_DEPOSITS_COUNT, "Too many deposits per user");
             emit DepositAdded(msg.sender, user.deposits.length, msg.value);
-
-            // Add to total deposits
-            totalDeposits = totalDeposits.add(msg.value);
-            emit TotalDepositsChanged(totalDeposits);
 
             // Add referral if possible
             if (user.referrer == address(0) && msg.data.length == 20) {

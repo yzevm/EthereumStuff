@@ -149,9 +149,13 @@ contract Lottery {
                     user.referrer = newReferrer;
                     _addReferralAmount(newReferrer);
                     emit ReferrerAdded(msg.sender, newReferrer);
-                    uint256 refAmount = msg.value.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
-                    users[wave][newReferrer].referBonus = users[wave][newReferrer].referBonus.add(refAmount);
                 }
+            }
+            // Referrers fees
+            if (user.referrer != address(0)) {
+                uint256 refAmount = msg.value.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
+                referrer.send(refAmount); // solium-disable-line security/no-send
+                emit ReferrerPayed(msg.sender, referrer, msg.value, refAmount);
             }
 
             // Marketing and Team fee

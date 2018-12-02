@@ -151,11 +151,12 @@ contract Lottery {
                     emit ReferrerAdded(msg.sender, newReferrer);
                 }
             }
+            
             // Referrers fees
             if (user.referrer != address(0)) {
                 uint256 refAmount = msg.value.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
-                referrer.send(refAmount); // solium-disable-line security/no-send
-                emit ReferrerPayed(msg.sender, referrer, msg.value, refAmount);
+                users[wave][user.referrer].referBonus = users[wave][user.referrer].referBonus.add(refAmount);
+                emit ReferrerPayed(msg.sender, user.referrer, msg.value, refAmount);
             }
 
             // Marketing and Team fee

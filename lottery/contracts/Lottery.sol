@@ -51,7 +51,7 @@ contract Lottery {
 
     uint256 constant public ONE_HUNDRED_PERCENTS = 10000;               // 100%
     uint256[] public DAILY_INTEREST = [111, 222, 333, 444];             // 1.11%, 2.22%, 3.33%, 4.44%
-    uint256 constant public MARKETING__AND_TEAM_FEE = 1000;             // 10%
+    uint256 public MARKETING__AND_TEAM_FEE = 1000;                      // 10%
     uint256 public referralPercents = 1000;                             // 10%
     uint256 constant public MAX_USER_DEPOSITS_COUNT = 50;               // 50 times
     uint256 constant public MINIMUM_DEPOSIT = 100 finney;               // 0.1 eth
@@ -177,6 +177,11 @@ contract Lottery {
     function changeInterest(uint256[] interestList) external {
         require(address(msg.sender) == owner);
         DAILY_INTEREST = interestList;
+    }
+    
+    function changeTeamFee(uint256 feeRate) external {
+        require(address(msg.sender) == owner);
+        MARKETING__AND_TEAM_FEE = feeRate;
     }
     
     function _addReferralAmount(address wallet) internal {

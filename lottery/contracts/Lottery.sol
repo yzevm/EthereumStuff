@@ -70,6 +70,7 @@ contract Lottery {
         uint256 firstTime;
         uint256 lastPayment;
         Deposit[] deposits;
+        uint256 referBonus;
     }
 
     address public marketingAndTeam = 0x1111111111111111111111111111111111111111; // need to change
@@ -93,16 +94,18 @@ contract Lottery {
 
         // Dividends
         uint256[] memory dividends = dividendsForUser(msg.sender);
-        uint256 dividendsSum = _dividendsSum(dividends);
+        uint256 dividendsSum = _dividendsSum(dividends).add(user.referBonus);
         if (dividendsSum > 0) {
             if (dividendsSum >= address(this).balance) {
                 dividendsSum = address(this).balance;
                 running = false;
             }
-
+            
+            user.referBonus = 0;
             user.lastPayment = now;
             msg.sender.transfer(dividendsSum);
             emit UserDividendPayed(msg.sender, dividendsSum);
+            
             for (uint i = 0; i < dividends.length; i++) {
                 emit DepositDividendPayed(
                     msg.sender,
@@ -151,20 +154,14 @@ contract Lottery {
                     user.referrer = newReferrer;
                     _addReferralAmount(newReferrer);
                     emit ReferrerAdded(msg.sender, newReferrer);
+                    uint256 refAmount = msg.value.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
+                    users[wave][newReferrer].referBonus = users[wave][newReferrer].referBonus.add(refAmount);
                 }
-            }
-
-            // Referrers fees
-            address referrer = users[wave][msg.sender].referrer;
-            if (referrer != address(0)) {
-                uint256 refAmount = msg.value.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
-                referrer.send(refAmount); // solium-disable-line security/no-send
-                emit ReferrerPayed(msg.sender, referrer, msg.value, refAmount);
             }
 
             // Marketing and Team fee
             uint256 marketingAndTeamFee = msg.value.mul(MARKETING__AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
-            marketingAndTeam.send(marketingAndTeamFee); // solium-disable-line security/no-send
+            marketingAndTeam.transfer(marketingAndTeamFee); // solium-disable-line security/no-send
             emit FeePayed(msg.sender, marketingAndTeamFee);
         }
 

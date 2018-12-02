@@ -100,8 +100,8 @@ contract Lottery {
                 running = false;
             }
 
-            msg.sender.transfer(dividendsSum);
             user.lastPayment = now;
+            msg.sender.transfer(dividendsSum);
             emit UserDividendPayed(msg.sender, dividendsSum);
             for (uint i = 0; i < dividends.length; i++) {
                 emit DepositDividendPayed(

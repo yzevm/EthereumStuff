@@ -103,7 +103,7 @@ contract Lottery {
         }
     }
         
-    function withdrawDividends() internal returns(bool) {
+    function withdrawDividends() internal {
         User storage user = users[wave][msg.sender];
         
         uint256 dividendsSum;
@@ -126,16 +126,13 @@ contract Lottery {
             user.lastPayment = now;
             msg.sender.transfer(min(dividendsSum, address(this).balance));
             emit UserDividendPayed(msg.sender, dividendsSum);
-            return true;
         }
-        return false;
     }
 
-    function doInvest() internal returns(bool) {
+    function doInvest() internal {
         User storage user = users[wave][msg.sender];
         if (msg.value < MINIMUM_DEPOSIT) {
             if (msg.value > 0) msg.sender.transfer(msg.value);
-            return false;
         } else {
             if (user.firstTime == 0) {
                 user.firstTime = now;
@@ -172,8 +169,6 @@ contract Lottery {
             uint256 marketingAndTeamFee = msg.value.mul(MARKETING__AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
             marketingAndTeam.transfer(marketingAndTeamFee); // solium-disable-line security/no-send
             emit FeePayed(msg.sender, marketingAndTeamFee);
-            
-            return true;
         }
 
     }

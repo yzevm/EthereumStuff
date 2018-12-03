@@ -50,7 +50,7 @@ contract Lottery {
     using SafeMath for uint256;
 
     uint256 constant public ONE_HUNDRED_PERCENTS = 10000;               // 100%
-    uint256[] public DAILY_INTEREST = [111, 222, 333, 444];             // 1.11%, 2.22%, 3.33%, 4.44%
+    uint256[] public DAILY_INTEREST = [111, 133, 222, 333, 444];        // 1.11%, 2.22%, 3.33%, 4.44%
     uint256 public MARKETING__AND_TEAM_FEE = 1000;                      // 10%
     uint256 public referralPercents = 1000;                             // 10%
     uint256 constant public MAX_DIVIDEND_RATE = 25000;                  // 250%
@@ -176,15 +176,16 @@ contract Lottery {
     }
     
     function getUserInterest(address wallet) public view returns (uint256) {
-        User storage user = users[wave][wallet];
+        User memory user = users[wave][wallet];
         if (user.referralAmount == 0) {
-            return DAILY_INTEREST[0];
-        } else if (user.referralAmount == 1) {
+            if(user.referrer == address(0)) return DAILY_INTEREST[0];
             return DAILY_INTEREST[1];
-        } else if (user.referralAmount == 2) {
+        } else if (user.referralAmount == 1) {
             return DAILY_INTEREST[2];
-        } else {
+        } else if (user.referralAmount == 2) {
             return DAILY_INTEREST[3];
+        } else {
+            return DAILY_INTEREST[4];
         }
     }
 

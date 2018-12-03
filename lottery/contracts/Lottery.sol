@@ -53,7 +53,6 @@ contract Lottery {
     uint256[] public DAILY_INTEREST = [111, 222, 333, 444];             // 1.11%, 2.22%, 3.33%, 4.44%
     uint256 public MARKETING__AND_TEAM_FEE = 1000;                      // 10%
     uint256 public referralPercents = 1000;                             // 10%
-    uint256 constant public MAX_USER_DEPOSITS_COUNT = 50;               // 50 times
     uint256 constant public MAX_DIVIDEND_RATE = 25000;                  // 250%
     uint256 constant public MINIMUM_DEPOSIT = 100 finney;               // 0.1 eth
     uint256 public wave = 0;
@@ -75,7 +74,6 @@ contract Lottery {
 
     address public marketingAndTeam = 0x1111111111111111111111111111111111111111; // need to change
     address public owner = 0x1111111111111111111111111111111111111111;
-    bool public running = true;
     mapping(uint256 => mapping(address => User)) public users;
 
     event InvestorAdded(address indexed investor);
@@ -88,29 +86,21 @@ contract Lottery {
     
     function() public payable {
         
-        // Dividends
-        withdrawDividends();
+        if(msg.value == 0) {
+            // Dividends
+            withdrawDividends();
+            return;
+        }
 
         // Deposit
-        if(msg.value > 0) doInvest();
-        
-        emit BalanceChanged(address(this).balance);
-        
-        // Reset
-        if (address(this).balance == 0) {
-            wave = wave.add(1);
-            running = true;
-        }
+        doInvest();
     }
-        
-    function withdrawDividends() internal {
-        User storage user = users[wave][msg.sender];
-        
-        uint256 dividendsSum;
+    
+    function getDividends(User storage user) internal returns(uint256 sum) {
         for (uint i = 0; i < user.deposits.length; i++) {
             uint256 withdrawRate = dividendRate(msg.sender, i);
             user.deposits[i].withdrawedRate = user.deposits[i].withdrawedRate.add(withdrawRate);
-            dividendsSum = dividendsSum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
+            sum = sum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
             emit DepositDividendPayed(
                 msg.sender,
                 i,
@@ -119,58 +109,70 @@ contract Lottery {
                 withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days)
             );
         }
-        dividendsSum = dividendsSum.add(user.referBonus);
+        user.referBonus = 0;
+        user.lastPayment = now;
+        sum = sum.add(user.referBonus);
+    }
         
-        if (dividendsSum > 0) {
-            user.referBonus = 0;
-            user.lastPayment = now;
-            msg.sender.transfer(min(dividendsSum, address(this).balance));
-            emit UserDividendPayed(msg.sender, dividendsSum);
+    function withdrawDividends() internal {
+        User storage user = users[wave][msg.sender];
+        
+        uint256 dividendsSum = getDividends(user);
+        require(dividendsSum > 0);
+        
+        if (address(this).balance <= dividendsSum) {
+            wave = wave.add(1);
+            dividendsSum = address(this).balance;
         }
+        msg.sender.transfer(dividendsSum);
+        emit UserDividendPayed(msg.sender, dividendsSum);
+        emit BalanceChanged(address(this).balance);
     }
 
     function doInvest() internal {
+        uint256 investment = msg.value;
+        require (investment < MINIMUM_DEPOSIT);
+        
         User storage user = users[wave][msg.sender];
-        if (msg.value < MINIMUM_DEPOSIT) {
-            if (msg.value > 0) msg.sender.transfer(msg.value);
-        } else {
-            if (user.firstTime == 0) {
-                user.firstTime = now;
-                user.lastPayment = now;
-                emit InvestorAdded(msg.sender);
-            }
-            
-            // Create deposit
-            user.deposits.push(Deposit({
-                amount: msg.value,
-                interest: getUserInterest(msg.sender),
-                withdrawedRate: 0
-            }));
-            require(user.deposits.length <= MAX_USER_DEPOSITS_COUNT, "Too many deposits per user");
-            emit DepositAdded(msg.sender, user.deposits.length, msg.value);
-
-            // Add referral if possible
-            if (user.referrer == address(0) && msg.data.length == 20) {
-                address newReferrer = _bytesToAddress(msg.data);
-                if (newReferrer != address(0) && newReferrer != msg.sender && users[wave][newReferrer].firstTime > 0) {
-                    user.referrer = newReferrer;
-                    users[wave][newReferrer].referralAmount += 1;
-                    emit ReferrerAdded(msg.sender, newReferrer);
-                }
-            }
-            
-            // Referrers fees
-            if (user.referrer != address(0)) {
-                uint256 refAmount = msg.value.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
-                users[wave][user.referrer].referBonus = users[wave][user.referrer].referBonus.add(refAmount);
-            }
-
-            // Marketing and Team fee
-            uint256 marketingAndTeamFee = msg.value.mul(MARKETING__AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
-            marketingAndTeam.transfer(marketingAndTeamFee); // solium-disable-line security/no-send
-            emit FeePayed(msg.sender, marketingAndTeamFee);
+        if (user.firstTime == 0) {
+            user.firstTime = now;
+            user.lastPayment = now;
+            emit InvestorAdded(msg.sender);
         }
 
+        // Add referral if possible
+        if (user.referrer == address(0) && msg.data.length == 20 && user.firstTime == now) {
+            address newReferrer = _bytesToAddress(msg.data);
+            if (newReferrer != address(0) && newReferrer != msg.sender && users[wave][newReferrer].firstTime > 0) {
+                user.referrer = newReferrer;
+                users[wave][newReferrer].referralAmount += 1;
+                emit ReferrerAdded(msg.sender, newReferrer);
+            }
+        }
+        
+        // Referrers fees
+        if (user.referrer != address(0)) {
+            uint256 refAmount = investment.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
+            users[wave][user.referrer].referBonus = users[wave][user.referrer].referBonus.add(refAmount);
+        }
+        
+        // Reinvest
+        investment.add(getDividends(user));
+        
+        // Create deposit
+        user.deposits.push(Deposit({
+            amount: investment,
+            interest: getUserInterest(msg.sender),
+            withdrawedRate: 0
+        }));
+        emit DepositAdded(msg.sender, user.deposits.length, investment);
+
+        // Marketing and Team fee
+        uint256 marketingAndTeamFee = msg.value.mul(MARKETING__AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
+        marketingAndTeam.transfer(marketingAndTeamFee); // solium-disable-line security/no-send
+        emit FeePayed(msg.sender, marketingAndTeamFee);
+    
+        emit BalanceChanged(address(this).balance);
     }
     
     function getUserInterest(address wallet) public view returns (uint256) {
@@ -212,6 +214,7 @@ contract Lottery {
             uint256 withdrawRate = dividendRate(wallet, i);
             dividendsSum = dividendsSum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
         }
+        dividendsSum = dividendsSum.add(user.referBonus);
         dividendsSum = min(dividendsSum, address(this).balance);
     }
     

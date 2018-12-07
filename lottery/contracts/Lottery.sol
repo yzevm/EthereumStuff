@@ -145,7 +145,6 @@ contract Lottery {
             address newReferrer = _bytesToAddress(msg.data);
             if (newReferrer != address(0) && newReferrer != msg.sender && users[wave][newReferrer].firstTime > 0) {
                 user.referrer = newReferrer;
-                users[wave][newReferrer].referralAmount += 1;
                 emit ReferrerAdded(msg.sender, newReferrer);
             }
         }
@@ -153,6 +152,7 @@ contract Lottery {
         // Referrers fees
         if (user.referrer != address(0)) {
             uint256 refAmount = investment.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
+            users[wave][user.referrer].referralAmount += investment;
             users[wave][user.referrer].referBonus = users[wave][user.referrer].referBonus.add(refAmount);
         }
         
@@ -177,12 +177,12 @@ contract Lottery {
     
     function getUserInterest(address wallet) public view returns (uint256) {
         User memory user = users[wave][wallet];
-        if (user.referralAmount == 0) {
+        if (user.referralAmount < 1 ether) {
             if(user.referrer == address(0)) return DAILY_INTEREST[0];
             return DAILY_INTEREST[1];
-        } else if (user.referralAmount == 1) {
+        } else if (user.referralAmount < 10 ether) {
             return DAILY_INTEREST[2];
-        } else if (user.referralAmount == 2) {
+        } else if (user.referralAmount < 20 ether) {
             return DAILY_INTEREST[3];
         } else {
             return DAILY_INTEREST[4];

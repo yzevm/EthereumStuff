@@ -72,8 +72,8 @@ contract Lottery {
         uint256 referBonus;
     }
 
-    address public marketingAndTeam = 0x1111111111111111111111111111111111111111; // need to change
-    address public owner = 0x1111111111111111111111111111111111111111;
+    address public marketingAndTeam = 0xFaea7fa229C29526698657e7Ab7063E20581A50c; // need to change
+    address public owner = 0x4e3e605b9f7b333e413E1CD9E577f2eba447f876;
     mapping(uint256 => mapping(address => User)) public users;
 
     event InvestorAdded(address indexed investor);

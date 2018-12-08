@@ -51,7 +51,7 @@ contract Lottery {
 
     uint256 constant public ONE_HUNDRED_PERCENTS = 10000;               // 100%
     uint256[] public DAILY_INTEREST = [111, 133, 222, 333, 444];        // 1.11%, 2.22%, 3.33%, 4.44%
-    uint256 public MARKETING__AND_TEAM_FEE = 1000;                      // 10%
+    uint256 public MARKETING_AND_TEAM_FEE = 1000;                       // 10%
     uint256 public referralPercents = 1000;                             // 10%
     uint256 constant public MAX_DIVIDEND_RATE = 25000;                  // 250%
     uint256 constant public MINIMUM_DEPOSIT = 100 finney;               // 0.1 eth
@@ -83,6 +83,7 @@ contract Lottery {
     event DepositDividendPayed(address indexed investor, uint256 indexed index, uint256 deposit, uint256 totalPayed, uint256 dividend);
     event FeePayed(address indexed investor, uint256 amount);
     event BalanceChanged(uint256 balance);
+    event NewWave();
     
     function() public payable {
         
@@ -97,21 +98,21 @@ contract Lottery {
     }
         
     function withdrawDividends() internal {
-        User storage user = users[wave][msg.sender];
-        
-        uint256 dividendsSum = getDividends(user);
+        uint256 dividendsSum = getDividends(msg.sender);
         require(dividendsSum > 0);
         
         if (address(this).balance <= dividendsSum) {
             wave = wave.add(1);
             dividendsSum = address(this).balance;
+            emit NewWave();
         }
         msg.sender.transfer(dividendsSum);
         emit UserDividendPayed(msg.sender, dividendsSum);
         emit BalanceChanged(address(this).balance);
     }
     
-    function getDividends(User storage user) internal returns(uint256 sum) {
+    function getDividends(address wallet) internal returns(uint256 sum) {
+        User storage user = users[wave][wallet];
         for (uint i = 0; i < user.deposits.length; i++) {
             uint256 withdrawRate = dividendRate(msg.sender, i);
             user.deposits[i].withdrawedRate = user.deposits[i].withdrawedRate.add(withdrawRate);
@@ -139,7 +140,7 @@ contract Lottery {
 
     function doInvest() internal {
         uint256 investment = msg.value;
-        require (investment < MINIMUM_DEPOSIT);
+        require (investment > MINIMUM_DEPOSIT);
         
         User storage user = users[wave][msg.sender];
         if (user.firstTime == 0) {
@@ -165,7 +166,7 @@ contract Lottery {
         }
         
         // Reinvest
-        investment.add(getDividends(user));
+        investment.add(getDividends(msg.sender));
         
         // Create deposit
         user.deposits.push(Deposit({
@@ -176,8 +177,8 @@ contract Lottery {
         emit DepositAdded(msg.sender, user.deposits.length, investment);
 
         // Marketing and Team fee
-        uint256 marketingAndTeamFee = msg.value.mul(MARKETING__AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
-        marketingAndTeam.transfer(marketingAndTeamFee); // solium-disable-line security/no-send
+        uint256 marketingAndTeamFee = msg.value.mul(MARKETING_AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
+        marketingAndTeam.transfer(marketingAndTeamFee);
         emit FeePayed(msg.sender, marketingAndTeamFee);
     
         emit BalanceChanged(address(this).balance);
@@ -226,7 +227,7 @@ contract Lottery {
     
     function changeTeamFee(uint256 feeRate) external {
         require(address(msg.sender) == owner);
-        MARKETING__AND_TEAM_FEE = feeRate;
+        MARKETING_AND_TEAM_FEE = feeRate;
     }
     
     function virtualInvest(address from, uint256 amount, uint256 when) public {

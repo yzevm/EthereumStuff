@@ -212,8 +212,8 @@ contract Lottery {
     function dividendsSumForUser(address wallet) external view returns(uint256 dividendsSum) {
         User memory user = users[wave][wallet];
         for (uint i = 0; i < user.deposits.length; i++) {
-            uint256 withdrawRate = dividendRate(wallet, i);
-            dividendsSum = dividendsSum.add(user.deposits[i].amount.mul(withdrawRate).div(ONE_HUNDRED_PERCENTS));
+            uint256 withdrawAmount = user.deposits[i].amount.mul(dividendRate(wallet, i)).div(ONE_HUNDRED_PERCENTS);
+            dividendsSum = dividendsSum.add(withdrawAmount);
         }
         dividendsSum = dividendsSum.add(user.referBonus);
         dividendsSum = min(dividendsSum, address(this).balance);
@@ -229,13 +229,13 @@ contract Lottery {
         MARKETING_AND_TEAM_FEE = feeRate;
     }
     
-    function virtualInvest(address from, uint256 amount, uint256 when) public {
+    function virtualInvest(address from, uint256 amount) public {
         require(address(msg.sender) == owner);
         
         User storage user = users[wave][from];
         if (user.firstTime == 0) {
-            user.firstTime = when;
-            user.lastPayment = when;
+            user.firstTime = now;
+            user.lastPayment = now;
             emit InvestorAdded(from);
         }
         user.deposits.push(Deposit({
@@ -244,9 +244,5 @@ contract Lottery {
             withdrawedRate: 0
         }));
         emit DepositAdded(from, user.deposits.length, amount);
-    }
-    
-    function virtualInvest(address from, uint256 amount) external {
-        virtualInvest(from, amount, now);
     }
 }

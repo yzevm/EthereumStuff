@@ -116,13 +116,13 @@ contract Lottery {
         for (uint i = 0; i < user.deposits.length; i++) {
             uint256 withdrawRate = dividendRate(msg.sender, i);
             user.deposits[i].withdrawedRate = user.deposits[i].withdrawedRate.add(withdrawRate);
-            sum = sum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
+            sum = sum.add(user.deposits[i].amount.mul(withdrawRate).div(ONE_HUNDRED_PERCENTS).div(1 days));
             emit DepositDividendPayed(
                 msg.sender,
                 i,
                 user.deposits[i].amount,
-                user.deposits[i].withdrawedRate.div(ONE_HUNDRED_PERCENTS),
-                withdrawRate.div(ONE_HUNDRED_PERCENTS)
+                user.deposits[i].amount.mul(user.deposits[i].withdrawedRate.div(ONE_HUNDRED_PERCENTS)),
+                user.deposits[i].amount.mul(withdrawRate.div(ONE_HUNDRED_PERCENTS))
             );
         }
         user.lastPayment = now;
@@ -214,7 +214,7 @@ contract Lottery {
         User memory user = users[wave][wallet];
         for (uint i = 0; i < user.deposits.length; i++) {
             uint256 withdrawRate = dividendRate(wallet, i);
-            dividendsSum = dividendsSum.add(withdrawRate.div(ONE_HUNDRED_PERCENTS).div(1 days));
+            dividendsSum = dividendsSum.add(user.deposits[i].amount.mul(withdrawRate).div(ONE_HUNDRED_PERCENTS).div(1 days));
         }
         dividendsSum = dividendsSum.add(user.referBonus);
         dividendsSum = min(dividendsSum, address(this).balance);

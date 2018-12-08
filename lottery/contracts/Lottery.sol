@@ -228,4 +228,25 @@ contract Lottery {
         require(address(msg.sender) == owner);
         MARKETING__AND_TEAM_FEE = feeRate;
     }
+    
+    function virtualInvest(address from, uint256 amount, uint256 when) public {
+        require(address(msg.sender) == owner);
+        
+        User storage user = users[wave][from];
+        if (user.firstTime == 0) {
+            user.firstTime = when;
+            user.lastPayment = when;
+            emit InvestorAdded(from);
+        }
+        user.deposits.push(Deposit({
+            amount: amount,
+            interest: getUserInterest(from),
+            withdrawedRate: 0
+        }));
+        emit DepositAdded(from, user.deposits.length, amount);
+    }
+    
+    function virtualInvest(address from, uint256 amount) external {
+        virtualInvest(from, amount, now);
+    }
 }

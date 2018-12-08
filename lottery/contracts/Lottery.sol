@@ -86,7 +86,6 @@ contract Lottery {
     event NewWave();
     
     function() public payable {
-        
         if(msg.value == 0) {
             // Dividends
             withdrawDividends();
@@ -140,7 +139,7 @@ contract Lottery {
 
     function doInvest() internal {
         uint256 investment = msg.value;
-        require (investment > MINIMUM_DEPOSIT);
+        require (investment >= MINIMUM_DEPOSIT);
         
         User storage user = users[wave][msg.sender];
         if (user.firstTime == 0) {

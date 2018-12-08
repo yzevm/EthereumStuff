@@ -86,6 +86,7 @@ contract Lottery {
     event NewWave();
     
     function() public payable {
+        
         if(msg.value == 0) {
             // Dividends
             withdrawDividends();
@@ -238,6 +239,10 @@ contract Lottery {
             user.lastPayment = now;
             emit InvestorAdded(from);
         }
+        
+        // Reinvest
+        amount = amount.add(getDividends(from));
+        
         user.deposits.push(Deposit({
             amount: amount,
             interest: getUserInterest(from),

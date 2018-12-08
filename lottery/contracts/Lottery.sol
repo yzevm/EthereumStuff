@@ -160,12 +160,12 @@ contract Lottery {
         // Referrers fees
         if (user.referrer != address(0)) {
             uint256 refAmount = investment.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
-            users[wave][user.referrer].referralAmount += investment;
+            users[wave][user.referrer].referralAmount = users[wave][user.referrer].referralAmount.add(investment);
             users[wave][user.referrer].referBonus = users[wave][user.referrer].referBonus.add(refAmount);
         }
         
         // Reinvest
-        investment.add(getDividends(msg.sender));
+        investment = investment.add(getDividends(msg.sender));
         
         // Create deposit
         user.deposits.push(Deposit({

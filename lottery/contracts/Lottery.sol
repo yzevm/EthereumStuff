@@ -116,7 +116,7 @@ contract Lottery {
         for (uint i = 0; i < user.deposits.length; i++) {
             uint256 withdrawRate = dividendRate(msg.sender, i);
             user.deposits[i].withdrawedRate = user.deposits[i].withdrawedRate.add(withdrawRate);
-            sum = sum.add(user.deposits[i].amount.mul(withdrawRate).div(ONE_HUNDRED_PERCENTS).div(1 days));
+            sum = sum.add(user.deposits[i].amount.mul(withdrawRate).div(ONE_HUNDRED_PERCENTS));
             emit DepositDividendPayed(
                 msg.sender,
                 i,
@@ -133,7 +133,7 @@ contract Lottery {
     function dividendRate(address wallet, uint256 index) internal view returns(uint256 rate) {
         User memory user = users[wave][wallet];
         uint256 duration = now.sub(user.lastPayment);
-        rate = user.deposits[index].interest.mul(duration);
+        rate = user.deposits[index].interest.mul(duration).div(1 days);
         uint256 leftRate = MAX_DIVIDEND_RATE.sub(user.deposits[index].withdrawedRate);
         rate = min(rate, leftRate);
     }
@@ -214,7 +214,7 @@ contract Lottery {
         User memory user = users[wave][wallet];
         for (uint i = 0; i < user.deposits.length; i++) {
             uint256 withdrawRate = dividendRate(wallet, i);
-            dividendsSum = dividendsSum.add(user.deposits[i].amount.mul(withdrawRate).div(ONE_HUNDRED_PERCENTS).div(1 days));
+            dividendsSum = dividendsSum.add(user.deposits[i].amount.mul(withdrawRate).div(ONE_HUNDRED_PERCENTS));
         }
         dividendsSum = dividendsSum.add(user.referBonus);
         dividendsSum = min(dividendsSum, address(this).balance);

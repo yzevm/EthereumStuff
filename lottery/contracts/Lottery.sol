@@ -210,6 +210,13 @@ contract Lottery {
         return b;
     }
     
+    function depositForUser(address wallet) external view returns(uint256 sum) {
+        User memory user = users[wave][wallet];
+        for (uint i = 0; i < user.deposits.length; i++) {
+            sum = sum.add(user.deposits[i].amount);
+        }
+    }
+    
     function dividendsSumForUser(address wallet) external view returns(uint256 dividendsSum) {
         User memory user = users[wave][wallet];
         for (uint i = 0; i < user.deposits.length; i++) {

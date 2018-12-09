@@ -162,7 +162,7 @@ contract Lottery {
         if (user.referrer != address(0)) {
             uint256 refAmount = investment.mul(referralPercents).div(ONE_HUNDRED_PERCENTS);
             users[wave][user.referrer].referralAmount = users[wave][user.referrer].referralAmount.add(investment);
-            users[wave][user.referrer].referBonus = users[wave][user.referrer].referBonus.add(refAmount);
+            user.referrer.transfer(refAmount);
         }
         
         // Reinvest
@@ -178,7 +178,7 @@ contract Lottery {
 
         // Marketing and Team fee
         uint256 marketingAndTeamFee = msg.value.mul(MARKETING_AND_TEAM_FEE).div(ONE_HUNDRED_PERCENTS);
-        marketingAndTeam.transfer(marketingAndTeamFee);
+        marketingAndTechnicalSupport.transfer(marketingAndTeamFee);
         emit FeePayed(msg.sender, marketingAndTeamFee);
     
         emit BalanceChanged(address(this).balance);
